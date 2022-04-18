@@ -16,13 +16,12 @@ int8_t mouse_keys[3] = {0};
 static uint8_t mouse_cycle = 0;
 
 static uint8_t ps2_kbd_scancodes[128] = {
-    0,   27,   '1',  '2', '3',  '4', '5', '6', '7', '8', '9', '0', '-',
-    '=', '\b', '\t', 'q', 'w',  'e', 'r', 't', 'y', 'u', 'i', 'o', 'p',
-    '[', ']',  '\n', 0,   'a',  's', 'd', 'f', 'g', 'h', 'j', 'k', 'l',
-    ';', '\'', '`',  0,   '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',',
-    '.', '/',  0,    '*', 0,    ' ', 0,   0,   0,   0,   0,   0,   0,
-    0,   0,    0,    0,   0,    0,   0,   0,   0,   '-', 0,   0,   0,
-    '+', 0,    0,    0,   0,    0,   0,   0,   0,   0,   0,   0,
+  0,    27,  '1', '2', '3', '4', '5', '6', '7', '8', '9',  '0', '-', '=',  '\b',
+  '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p',  '[', ']', '\n', 0,
+  'a',  's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', 0,   '\\', 'z',
+  'x',  'c', 'v', 'b', 'n', 'm', ',', '.', '/', 0,   '*',  0,   ' ', 0,    0,
+  0,    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,    0,   0,   0,    '-',
+  0,    0,   0,   '+', 0,   0,   0,   0,   0,   0,   0,    0,   0,   0,    0,
 };
 
 void ps2_wait_out() {
@@ -82,7 +81,8 @@ void kbd_handler(uint64_t rsp) {
   (void)rsp;
   ps2_wait_in();
   uint8_t c = inb(0x60);
-  curr_key = ps2_kbd_scancodes[c];
+  if (c > 0x1 && c < 0x59)
+    curr_key = ps2_kbd_scancodes[c & 0x7f];
 }
 
 uint8_t getchar() {
@@ -98,7 +98,7 @@ void getmouse(int8_t *bytes) {
 
 int init_ps2() {
   asm volatile("cli");
-  
+
   ps2_clr();
 
   /* Disable ports */
@@ -106,13 +106,9 @@ int init_ps2() {
   outb(PS2_CMD_PORT, 0xad);
   ps2_wait_out();
   outb(PS2_CMD_PORT, 0xa7);
-  
+
   ps2_clr();
 
-  /* ps2_wait_out(); */
-  /* outb(PS2_CMD_PORT, 0x20); */
-  /* ps2_wait_in(); */
-  /* uint8_t conf = inb(0x60); */
   uint8_t conf = 0b01000111;
   ps2_wait_out();
   outb(PS2_CMD_PORT, 0x60);
@@ -133,7 +129,7 @@ int init_ps2() {
   ps2_wait_out();
   ps2_port1_write(0xf6);
   ps2_ack();
-  
+
   ps2_wait_out();
   ps2_port1_write(0xf4);
   ps2_ack();
@@ -149,7 +145,7 @@ int init_ps2() {
   outb(PS2_CMD_PORT, 0xa8);
 
   ps2_clr();
- 
+
   asm volatile("sti");
 
   return 0;

@@ -39,8 +39,6 @@ int tmpfs_finddir(fs_file_t *file, char *name, dirent_t *dirent) {
   return 1;
 }
 
-#include <printf.h>
-
 int tmpfs_find(fs_t *fs, char *path, fs_file_t **ref, fs_file_t **parent_dir) {
   fs_file_t *root = fs->private_data;
 
@@ -121,8 +119,8 @@ int tmpfs_rmdir(fs_file_t *file) {
     return 1;
 
   kfree(((tmpfs_dirent_t *)file->private_data)
-            ->children
-            .data); // TODO: This can leave hanging dirs. Make it *not* do that
+          ->children
+          .data); // TODO: This can leave hanging dirs. Make it *not* do that
   kfree(file->private_data);
   kfree(file);
 
@@ -169,16 +167,16 @@ fs_file_t *tmpfs_open(fs_t *fs, char *name) {
 }
 
 file_ops_t tmpfs_file_ops = (file_ops_t){
-    .read = tmpfs_read,
-    .write = tmpfs_write,
-    .rmdir = tmpfs_rmdir,
-    .delete = tmpfs_delete,
-    .truncate = tmpfs_truncate,
-    .close = tmpfs_close,
-    .readdir = tmpfs_readdir,
-    .ioctl = tmpfs_ioctl,
-    .chmod = tmpfs_chmod,
-    .chown = tmpfs_chown,
+  .read = tmpfs_read,
+  .write = tmpfs_write,
+  .rmdir = tmpfs_rmdir,
+  .delete = tmpfs_delete,
+  .truncate = tmpfs_truncate,
+  .close = tmpfs_close,
+  .readdir = tmpfs_readdir,
+  .ioctl = tmpfs_ioctl,
+  .chmod = tmpfs_chmod,
+  .chown = tmpfs_chown,
 };
 
 fs_file_t *tmpfs_create(fs_t *fs, char *path, int mode, int uid, int gid) {
@@ -191,19 +189,18 @@ fs_file_t *tmpfs_create(fs_t *fs, char *path, int mode, int uid, int gid) {
 
   fs_file_t *file = kmalloc(sizeof(fs_file_t));
   *file = (fs_file_t){
-      .uid = uid,
-      .gid = gid,
-      .file_ops = &tmpfs_file_ops,
-      .fs = fs,
-      .length = 0,
-      .inode = (uint64_t)file,
-      .private_data = kmalloc(1),
-      .mode = S_IFREG | mode,
-
-      .last_access_time = tim,
-      .last_modification_time = tim,
-      .last_status_change_time = tim,
-      .creation_time = tim,
+    .uid = uid,
+    .gid = gid,
+    .file_ops = &tmpfs_file_ops,
+    .fs = fs,
+    .length = 0,
+    .inode = (uint64_t)file,
+    .private_data = NULL,
+    .mode = S_IFREG | mode,
+    .last_access_time = tim,
+    .last_modification_time = tim,
+    .last_status_change_time = tim,
+    .creation_time = tim,
   };
 
   path++;
@@ -237,19 +234,18 @@ fs_file_t *tmpfs_mkdir(fs_t *fs, char *path, int mode, int uid, int gid) {
 
   fs_file_t *file = kmalloc(sizeof(fs_file_t));
   *file = (fs_file_t){
-      .uid = uid,
-      .gid = gid,
-      .file_ops = &tmpfs_file_ops,
-      .fs = fs,
-      .length = 0,
-      .inode = (uint64_t)file,
-      .private_data = kmalloc(sizeof(tmpfs_dirent_t)),
-      .mode = S_IFDIR | mode,
-
-      .last_access_time = tim,
-      .last_modification_time = tim,
-      .last_status_change_time = tim,
-      .creation_time = tim,
+    .uid = uid,
+    .gid = gid,
+    .file_ops = &tmpfs_file_ops,
+    .fs = fs,
+    .length = 0,
+    .inode = (uint64_t)file,
+    .private_data = kmalloc(sizeof(tmpfs_dirent_t)),
+    .mode = S_IFDIR | mode,
+    .last_access_time = tim,
+    .last_modification_time = tim,
+    .last_status_change_time = tim,
+    .creation_time = tim,
   };
 
   path++;
@@ -272,7 +268,7 @@ fs_file_t *tmpfs_mkdir(fs_t *fs, char *path, int mode, int uid, int gid) {
 
   ((tmpfs_dirent_t *)file->private_data)->parent = parent_dir;
   ((tmpfs_dirent_t *)file->private_data)->children.data =
-      kmalloc(sizeof(fs_file_t));
+    kmalloc(sizeof(fs_file_t));
   ((tmpfs_dirent_t *)file->private_data)->file = file;
 
   return file;
@@ -289,20 +285,19 @@ fs_file_t *tmpfs_mknod(fs_t *fs, char *name, int mode, int uid, int gid,
 
   fs_file_t *file = kmalloc(sizeof(fs_file_t));
   *file = (fs_file_t){
-      .uid = uid,
-      .gid = gid,
-      .file_ops = &tmpfs_file_ops,
-      .fs = fs,
-      .length = 0,
-      .inode = (uint64_t)file,
-      .private_data = NULL,
-      .mode = mode,
-      .dev = dev,
-
-      .last_access_time = tim,
-      .last_modification_time = tim,
-      .last_status_change_time = tim,
-      .creation_time = tim,
+    .uid = uid,
+    .gid = gid,
+    .file_ops = &tmpfs_file_ops,
+    .fs = fs,
+    .length = 0,
+    .inode = (uint64_t)file,
+    .private_data = NULL,
+    .mode = mode,
+    .dev = dev,
+    .last_access_time = tim,
+    .last_modification_time = tim,
+    .last_status_change_time = tim,
+    .creation_time = tim,
   };
 
   name++;
@@ -337,20 +332,19 @@ fs_t *tmpfs_mount(device_t *dev) {
 
   fs_file_t *file = kmalloc(sizeof(fs_file_t));
   *file = (fs_file_t){
-      .uid = 0, // Idk know anymore
-      .gid = 0,
-      .file_ops = &tmpfs_file_ops,
-      .fs = fs,
-      .length = 0,
-      .inode = (uint64_t)file,
-      .private_data = kmalloc(sizeof(tmpfs_dirent_t)),
-      .mode =
-          S_IFDIR | S_IREAD | S_IRGRP | S_IRUSR | S_IWRITE | S_IWGRP | S_IWUSR,
-
-      .last_access_time = tim,
-      .last_modification_time = tim,
-      .last_status_change_time = tim,
-      .creation_time = tim,
+    .uid = 0, // Idk know anymore
+    .gid = 0,
+    .file_ops = &tmpfs_file_ops,
+    .fs = fs,
+    .length = 0,
+    .inode = (uint64_t)file,
+    .private_data = kmalloc(sizeof(tmpfs_dirent_t)),
+    .mode =
+      S_IFDIR | S_IREAD | S_IRGRP | S_IRUSR | S_IWRITE | S_IWGRP | S_IWUSR,
+    .last_access_time = tim,
+    .last_modification_time = tim,
+    .last_status_change_time = tim,
+    .creation_time = tim,
   };
 
   file->path = strdup("/");
@@ -359,7 +353,7 @@ fs_t *tmpfs_mount(device_t *dev) {
 
   ((tmpfs_dirent_t *)file->private_data)->parent = file;
   ((tmpfs_dirent_t *)file->private_data)->children.data =
-      kmalloc(sizeof(fs_file_t));
+    kmalloc(sizeof(fs_file_t));
   ((tmpfs_dirent_t *)file->private_data)->children.capacity = 1;
   ((tmpfs_dirent_t *)file->private_data)->children.length = 0;
 
@@ -371,11 +365,11 @@ fs_t *tmpfs_mount(device_t *dev) {
 }
 
 fs_ops_t tmpfs_fs_ops = (fs_ops_t){
-    .create = tmpfs_create,
-    .mkdir = tmpfs_mkdir,
-    .mount = tmpfs_mount,
-    .open = tmpfs_open,
-    .mknod = tmpfs_mknod,
+  .create = tmpfs_create,
+  .mkdir = tmpfs_mkdir,
+  .mount = tmpfs_mount,
+  .open = tmpfs_open,
+  .mknod = tmpfs_mknod,
 };
 
 int init_tmpfs() {

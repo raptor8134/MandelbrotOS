@@ -11,3 +11,9 @@ prog:
 		$(PROG_DIRECTORY_GUARD) ; \
 		make -C $$dir ; \
 	done
+
+clean:
+	for dir in $(SUBDIRS) ; do \
+		$(PROG_DIRECTORY_GUARD) ; \
+		make -C $$dir clean ; \
+	done

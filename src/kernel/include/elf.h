@@ -53,7 +53,6 @@ typedef struct elf_prog_header {
   uint64_t reserved1;
 } __attribute__((packed)) elf_prog_header_t;
 
-uint8_t elf_run_binary(char *name, char *path, proc_t *proc, size_t time_slice,
-                       uint64_t arg1, uint64_t arg2, uint64_t arg3);
+uint8_t elf_run_binary(char *path, proc_t *proc, int auto_equeue);
 
 #endif

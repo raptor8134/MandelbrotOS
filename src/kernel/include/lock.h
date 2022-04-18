@@ -69,8 +69,4 @@ typedef struct {
 #define UNLOCK(LOCK)                                                           \
   ({ asm volatile("lock btrl $0, %0" : "+m"((LOCK).bits) : : "memory"); })
 
-#define MAKE_LOCK(name)                                                        \
-  static volatile lock_t name = {0};                                           \
-  LOCK(name)
-
 #endif

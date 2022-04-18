@@ -1,35 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
-
-#define SYSCALL_OPEN 0
-#define SYSCALL_CLOSE 1
-#define SYSCALL_READ 2
-#define SYSCALL_WRITE 3
-#define SYSCALL_EXEC 4
-#define SYSCALL_MMAP 5
-#define SYSCALL_MUNMAP 6
-#define SYSCALL_STAT 7
-#define SYSCALL_FSTAT 8
-#define SYSCALL_GETPID 9
-#define SYSCALL_EXIT 10
-#define SYSCALL_FORK 11
-#define SYSCALL_GETTIMEOFDAY 12
-#define SYSCALL_FSYNC 13
-#define SYSCALL_IOCTL 14
-
-#define IOCTL_FBDEV_GET_WIDTH 1
-#define IOCTL_FBDEV_GET_HEIGHT 2
-#define IOCTL_FBDEV_GET_BPP 3
-
-#define PROT_READ 0x1
-#define PROT_WRITE 0x2
-#define PROT_EXEC 0x4
-#define PROT_NONE 0x0
-
-#define MAP_PRIVATE 0x1
-#define MAP_SHARED 0x2
-#define MAP_FIXED 0x4
-#define MAP_ANON 0x8
+#include <sys/mandelbrot.h>
 
 #define ITTERATIONS 80
 
@@ -134,24 +105,24 @@ typedef struct mmap_args {
 void main() {
   size_t fd = intsyscall(SYSCALL_OPEN, (uint64_t) "/dev/fb0", 0, 0, 0, 0);
 
-  width = intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_WIDTH, (uint64_t)NULL,
-                     0, 0);
-  height = intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT, (uint64_t)NULL,
-                      0, 0);
-  size_t bpp = intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT,
-                          (uint64_t)NULL, 0, 0);
+  width =
+    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_WIDTH, (uint64_t)NULL, 0, 0);
+  height =
+    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT, (uint64_t)NULL, 0, 0);
+  size_t bpp =
+    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT, (uint64_t)NULL, 0, 0);
 
   mmap_args_t args = (mmap_args_t){
-      .addr = NULL,
-      .fd = fd,
-      .length = width * height * (bpp / 8),
-      .offset = 0,
-      .prot = PROT_READ | PROT_WRITE,
-      .flags = 0,
+    .addr = NULL,
+    .fd = fd,
+    .length = width * height * (bpp / 8),
+    .offset = 0,
+    .prot = PROT_READ | PROT_WRITE,
+    .flags = 0,
   };
 
   framebuffer =
-      (uint32_t *)intsyscall(SYSCALL_MMAP, (uint64_t)&args, 0, 0, 0, 0);
+    (uint32_t *)intsyscall(SYSCALL_MMAP, (uint64_t)&args, 0, 0, 0, 0);
 
   // 4 really cool alorithms to choose from
 

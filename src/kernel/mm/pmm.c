@@ -14,7 +14,7 @@
 #define BIT_CLEAR(__bit) (pmm_bitmap[(__bit) / 8] &= ~(1 << ((__bit) % 8)))
 #define BIT_TEST(__bit) ((pmm_bitmap[(__bit) / 8] >> ((__bit) % 8)) & 1)
 
-static volatile lock_t pmm_lock = {0};
+static lock_t pmm_lock = {0};
 
 static uint8_t *pmm_bitmap = 0;
 static uintptr_t highest_page = 0;
@@ -26,7 +26,7 @@ void pmm_free_page(void *adr) {
 }
 
 void pmm_alloc_page(void *adr) {
-  MAKE_LOCK(pmm_lock);
+  LOCK(pmm_lock);
   BIT_SET((size_t)adr / PAGE_SIZE);
   UNLOCK(pmm_lock);
 }

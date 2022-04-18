@@ -78,9 +78,9 @@ int vfs_mount(char *path, device_t *dev, char *fs_name) {
   vfs_mount_info_t *mi = kmalloc(sizeof(vfs_mount_info_t));
 
   *mi = (vfs_mount_info_t){
-      .dev = dev,
-      .path = path,
-      .fs = fs,
+    .dev = dev,
+    .path = path,
+    .fs = fs,
   };
 
   vec_push(&vfs_mounts, mi);
@@ -136,21 +136,21 @@ int vfs_truncate(fs_file_t *file, size_t size) {
 
 int vfs_fstat(fs_file_t *file, stat_t *stat) {
   *stat = (stat_t){
-      .device_id = (file->fs->dev) ? file->fs->dev->id : (uint64_t)-1,
-      .device_type = (file->fs->dev) ? file->fs->dev->type : (uint64_t)-1,
-      .file_serial = file->inode,
-      .hardlink_count = 0,
-      .user_id = file->uid,
-      .group_id = file->gid,
-      .file_size = file->length,
+    .device_id = (file->fs->dev) ? file->fs->dev->id : (uint64_t)-1,
+    .device_type = (file->fs->dev) ? file->fs->dev->type : (uint64_t)-1,
+    .file_serial = file->inode,
+    .hardlink_count = 0,
+    .user_id = file->uid,
+    .group_id = file->gid,
+    .file_size = file->length,
 
-      .last_access_time = file->last_access_time,
-      .last_modification_time = file->last_modification_time,
-      .last_status_change_time = file->last_status_change_time,
-      .creation_time = file->creation_time,
+    .last_access_time = file->last_access_time,
+    .last_modification_time = file->last_modification_time,
+    .last_status_change_time = file->last_status_change_time,
+    .creation_time = file->creation_time,
 
-      .block_count = (file->dev) ? file->dev->block_count : 0,
-      .block_size = (file->dev) ? file->dev->block_size : 0,
+    .block_count = (file->dev) ? file->dev->block_count : 0,
+    .block_size = (file->dev) ? file->dev->block_size : 0,
   };
 
   return 0;
@@ -180,28 +180,28 @@ int vfs_chown(fs_file_t *file, int uid, int gid) {
 fs_file_t *vfs_mknod(char *path, int mode, int uid, int gid, device_t *dev) {
   vfs_mount_info_t *mi = vfs_find_mount(path);
   char *str =
-      (strlen(path) == strlen(mi->path)) ? "/" : path + strlen(mi->path) - 1;
+    (strlen(path) == strlen(mi->path)) ? "/" : path + strlen(mi->path) - 1;
   return mi->fs->ops->mknod(mi->fs, str, mode, uid, gid, dev);
 }
 
 fs_file_t *vfs_mkdir(char *path, int mode, int uid, int gid) {
   vfs_mount_info_t *mi = vfs_find_mount(path);
   char *str =
-      (strlen(path) == strlen(mi->path)) ? "/" : path + strlen(mi->path) - 1;
+    (strlen(path) == strlen(mi->path)) ? "/" : path + strlen(mi->path) - 1;
   return mi->fs->ops->mkdir(mi->fs, str, mode, uid, gid);
 }
 
 fs_file_t *vfs_create(char *path, int mode, int uid, int gid) {
   vfs_mount_info_t *mi = vfs_find_mount(path);
   char *str =
-      (strlen(path) == strlen(mi->path)) ? "/" : path + strlen(mi->path) - 1;
+    (strlen(path) == strlen(mi->path)) ? "/" : path + strlen(mi->path) - 1;
   return mi->fs->ops->create(mi->fs, str, mode, uid, gid);
 }
 
 fs_file_t *vfs_open(char *name) {
   vfs_mount_info_t *mi = vfs_find_mount(name);
   char *str =
-      (strlen(name) == strlen(mi->path)) ? "/" : name + strlen(mi->path) - 1;
+    (strlen(name) == strlen(mi->path)) ? "/" : name + strlen(mi->path) - 1;
   return mi->fs->ops->open(mi->fs, str);
 }
 

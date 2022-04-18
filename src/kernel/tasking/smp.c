@@ -7,13 +7,15 @@
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 #include <printf.h>
+#include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 #include <sys/gdt.h>
 #include <sys/idt.h>
 #include <tasking/scheduler.h>
 #include <tasking/smp.h>
 
-cpu_locals_t *cpu_locals;
+static cpu_locals_t *cpu_locals;
 static uint32_t bsp_lapic_id;
 static size_t inited_cpus = 0;
 
@@ -30,8 +32,10 @@ void smp_init_cpu(struct stivale2_smp_info *smp_info) {
 
   set_and_load_tss((uintptr_t)&locals->tss);
 
-  locals->last_run_thread_index = 0;
-  locals->current_thread = NULL;
+  memset(locals->last_run_thread_index, 0, SCHEDULE_REG * sizeof(size_t));
+  locals->current_proc = NULL;
+  locals->current_priority_peg = 0;
+  locals->current_priority = 0;
   locals->lapic_id = smp_info->lapic_id;
 
   set_locals(locals);
@@ -44,7 +48,7 @@ void smp_init_cpu(struct stivale2_smp_info *smp_info) {
   LOCKED_INC(inited_cpus);
 
   if (smp_info->lapic_id != bsp_lapic_id)
-    await_sched_start();
+    sched_await();
 
   return;
 }

@@ -32,18 +32,18 @@ datetime_t rtc_get_datetime() {
     ;
 
   return (datetime_t){
-      .hours = rtc_get_register(4),
-      .minutes = rtc_get_register(2),
-      .seconds = rtc_get_register(0),
-      .year = (rtc_get_register(century_register) * 100) + rtc_get_register(9) -
-              1900, // POSIX
-      .month = rtc_get_register(8),
-      .day = rtc_get_register(7),
+    .hours = rtc_get_register(4),
+    .minutes = rtc_get_register(2),
+    .seconds = rtc_get_register(0),
+    .year = (rtc_get_register(century_register) * 100) + rtc_get_register(9) -
+            1900, // POSIX
+    .month = rtc_get_register(8),
+    .day = rtc_get_register(7),
 
-      .day_of_week = rtc_get_register(6) - 1,
-      .day_of_year = 0, // TODO: Actually impliment this
-      .is_daylight_savings =
-          0, // TODO: Make the poor humans who have DST actually be supported
+    .day_of_week = rtc_get_register(6) - 1,
+    .day_of_year = 0, // TODO: Actually impliment this
+    .is_daylight_savings =
+      0, // TODO: Make the poor humans who have DST actually be supported
   };
 }
 

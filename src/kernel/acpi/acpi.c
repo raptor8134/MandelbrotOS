@@ -21,24 +21,22 @@ vec_madt_ioapic madt_ioapics;
 vec_madt_nmi madt_nmis;
 vec_madt_iso madt_isos;
 
-// TODO: ACPI 2.0+ support
-
 bool acpi_do_checksum(sdt_t *th) {
   uint8_t sum = 0;
 
   for (uint32_t i = 0; i < th->length; i++)
-    sum += ((char *)th)[i];
+    sum += ((int8_t *)th)[i];
 
-  return sum == 0;
+  return !sum;
 }
 
 void *acpi_get_table(char *signature, int index) {
   size_t entries;
 
   if (!xsdt)
-    entries = (rsdt->h.length - sizeof(rsdt->h)) / 4;
+    entries = (rsdt->h.length - sizeof(sdt_t)) / 4;
   else
-    entries = (xsdt->h.length - sizeof(xsdt->h)) / 8;
+    entries = (xsdt->h.length - sizeof(sdt_t)) / 8;
 
   int i = 0;
   sdt_t *h;
@@ -59,8 +57,6 @@ void *acpi_get_table(char *signature, int index) {
 
   return NULL;
 }
-
-#include <printf.h>
 
 void acpi_gather_madt() {
   madt = acpi_get_table("APIC", 0);
@@ -96,9 +92,6 @@ void acpi_gather_madt() {
 
     i += header->length;
   }
-
-  /* for (size_t i = 0; i < (size_t)madt_isos.length; i++) */
-  /* printf("ISO: Source %lu\r\n", madt_isos.data[i]->irq_source); */
 }
 
 int init_acpi(struct stivale2_struct_tag_rsdp *rsdp_info) {
@@ -114,8 +107,9 @@ int init_acpi(struct stivale2_struct_tag_rsdp *rsdp_info) {
 
   if (rsdp->revision > 0) {
     xsdt = (xsdt_t *)(rsdp->xsdt_address + PHYS_MEM_OFFSET);
-    klog(3, "ACPI is revision 2!\r\n");
-  }
+    klog(3, "ACPI is revision 2\r\n");
+  } else
+    klog(3, "ACPI is revision 1\r\n");
 
   fadt = acpi_get_table("FACP", 0);
 

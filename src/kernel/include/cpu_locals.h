@@ -9,11 +9,13 @@
 
 typedef struct cpu_locals {
   uint64_t lapic_timer_freq;
-  size_t last_run_thread_index;
   size_t cpu_number;
   size_t lapic_id;
-  thread_t *current_thread;
+  size_t last_run_thread_index[SCHED_PRIORITY_LEVELS];
+  proc_t *current_proc;
   tss_t tss;
+  uint8_t current_priority_peg;
+  uint8_t current_priority;
 } cpu_locals_t;
 
 static inline cpu_locals_t *get_locals() {
@@ -23,7 +25,5 @@ static inline cpu_locals_t *get_locals() {
 static inline void set_locals(cpu_locals_t *local) {
   wrmsr(0xc0000101, (uint64_t)local);
 }
-
-extern cpu_locals_t *cpu_locals;
 
 #endif

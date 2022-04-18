@@ -42,39 +42,39 @@ extern void isr30();
 extern void isr31();
 
 char *exception_messages[] = {
-    "Division By Zero",
-    "Debug",
-    "Non Maskable Interrupt",
-    "Breakpoint",
-    "Into Detected Overflow",
-    "Out of Bounds",
-    "Invalid Opcode",
-    "Device not Available",
-    "Double Fault",
-    "Coprocessor Segment Overrun",
-    "Bad TSS",
-    "Segment Not Present",
-    "Stack Fault Exception",
-    "General Protection Fault",
-    "Page Fault",
-    "[RESERVED]",
-    "Floating Point Exception",
-    "Alignment Check",
-    "Machine Check",
-    "SIMD Floating Point Exception",
-    "Virtualization Exception",
-    "[RESERVED]",
-    "[RESERVED]",
-    "[RESERVED]",
-    "[RESERVED]",
-    "[RESERVED]",
-    "[RESERVED]",
-    "[RESERVED]",
-    "[RESERVED]",
-    "[RESERVED]",
-    "[RESERVED]",
-    "[RESERVED]",
-    "Security Exception",
+  "Division By Zero",
+  "Debug",
+  "Non Maskable Interrupt",
+  "Breakpoint",
+  "Into Detected Overflow",
+  "Out of Bounds",
+  "Invalid Opcode",
+  "Device not Available",
+  "Double Fault",
+  "Coprocessor Segment Overrun",
+  "Bad TSS",
+  "Segment Not Present",
+  "Stack Fault Exception",
+  "General Protection Fault",
+  "Page Fault",
+  "[RESERVED]",
+  "Floating Point Exception",
+  "Alignment Check",
+  "Machine Check",
+  "SIMD Floating Point Exception",
+  "Virtualization Exception",
+  "[RESERVED]",
+  "[RESERVED]",
+  "[RESERVED]",
+  "[RESERVED]",
+  "[RESERVED]",
+  "[RESERVED]",
+  "[RESERVED]",
+  "[RESERVED]",
+  "[RESERVED]",
+  "[RESERVED]",
+  "[RESERVED]",
+  "Security Exception",
 };
 
 int init_isr() {
@@ -124,10 +124,10 @@ void c_isr_handler(uint64_t ex_no, uint64_t rsp) {
   uint64_t rbp = ((registers_t *)rsp)->rbp;
   while (rbp) {
     uint64_t rip = ((uint64_t *)(vmm_get_kernel_address(
-        get_locals()->current_thread->mother_proc->pagemap, rbp)))[1];
+      get_locals()->current_proc->pagemap, rbp)))[1];
     printf("%lx\r\n", rip);
     rbp = *((uint64_t *)(vmm_get_kernel_address(
-        get_locals()->current_thread->mother_proc->pagemap, rbp)));
+      get_locals()->current_proc->pagemap, rbp)));
   }
 
   while (1)

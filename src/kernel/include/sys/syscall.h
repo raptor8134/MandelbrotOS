@@ -20,6 +20,7 @@
 #define SYSCALL_FSYNC 13
 #define SYSCALL_IOCTL 14
 #define SYSCALL_GETPPID 15
+#define SYSCALL_SEEK 16
 
 #define PROT_READ 0x1
 #define PROT_WRITE 0x2
@@ -45,9 +46,7 @@ typedef struct mmap_args {
 typedef struct syscall_file {
   fs_file_t *file;
   size_t fd;
-  uint8_t *buf;
-  int dirty;
-  int is_buffered;
+  size_t offset;
 } syscall_file_t;
 
 int init_syscalls();

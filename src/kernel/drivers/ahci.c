@@ -144,7 +144,7 @@ ssize_t sata_read(device_t *dev, size_t start, size_t count, uint8_t *buf) {
   hba_cmd_tbl_t *cmd_table = (hba_cmd_tbl_t *)(uintptr_t)cmd_header->ctba;
   memset(cmd_table, 0,
          sizeof(hba_cmd_tbl_t) +
-             (cmd_header->prdtl - 1) * sizeof(hba_prdt_entry_t));
+           (cmd_header->prdtl - 1) * sizeof(hba_prdt_entry_t));
 
   size_t i;
   for (i = 0; i < (size_t)cmd_header->prdtl - 1; i++) {
@@ -158,12 +158,12 @@ ssize_t sata_read(device_t *dev, size_t start, size_t count, uint8_t *buf) {
   }
 
   cmd_table->prdt_entry[i].dba =
-      (uint32_t)(uintptr_t)((uint64_t)buf - PHYS_MEM_OFFSET);
+    (uint32_t)(uintptr_t)((uint64_t)buf - PHYS_MEM_OFFSET);
   cmd_table->prdt_entry[i].dbc = (count32 << 9) - 1;
   cmd_table->prdt_entry[i].i = 1;
 
   fis_reg_host_to_device_t *cmd_fis =
-      (fis_reg_host_to_device_t *)(&cmd_table->cfis);
+    (fis_reg_host_to_device_t *)(&cmd_table->cfis);
 
   cmd_fis->fis_type = FIS_TYPE_REG_HOST_TO_DEVICE;
   cmd_fis->c = 1;
@@ -232,7 +232,7 @@ ssize_t sata_write(device_t *dev, size_t start, size_t count, uint8_t *buf) {
   hba_cmd_tbl_t *cmd_table = (hba_cmd_tbl_t *)(uintptr_t)cmd_header->ctba;
   memset(cmd_table, 0,
          sizeof(hba_cmd_tbl_t) +
-             (cmd_header->prdtl - 1) * sizeof(hba_prdt_entry_t));
+           (cmd_header->prdtl - 1) * sizeof(hba_prdt_entry_t));
 
   size_t i;
   for (i = 0; i < (size_t)cmd_header->prdtl - 1; i++) {
@@ -246,12 +246,12 @@ ssize_t sata_write(device_t *dev, size_t start, size_t count, uint8_t *buf) {
   }
 
   cmd_table->prdt_entry[i].dba =
-      (uint32_t)(uintptr_t)((uint64_t)buf - PHYS_MEM_OFFSET);
+    (uint32_t)(uintptr_t)((uint64_t)buf - PHYS_MEM_OFFSET);
   cmd_table->prdt_entry[i].dbc = (count32 << 9) - 1;
   cmd_table->prdt_entry[i].i = 1;
 
   fis_reg_host_to_device_t *cmd_fis =
-      (fis_reg_host_to_device_t *)(&cmd_table->cfis);
+    (fis_reg_host_to_device_t *)(&cmd_table->cfis);
 
   cmd_fis->fis_type = FIS_TYPE_REG_HOST_TO_DEVICE;
   cmd_fis->c = 1;
@@ -303,18 +303,18 @@ void ahci_init_abars() {
           for (size_t p = 0; p < 4; p++) {
             device_t *dev = kmalloc(sizeof(device_t));
             *dev = (device_t){
-                .private_data = kmalloc(sizeof(ahci_private_data_t)),
-                .name = "SATA",
-                .type = S_IFBLK,
-                .block_count = 0, // TODO: figure out block count
-                .block_size = 512,
-                .read = sata_read,
-                .write = sata_write,
+              .private_data = kmalloc(sizeof(ahci_private_data_t)),
+              .name = "SATA",
+              .type = S_IFBLK,
+              .block_count = 0, // TODO: figure out block count
+              .block_size = 512,
+              .read = sata_read,
+              .write = sata_write,
             };
 
             *((ahci_private_data_t *)dev->private_data) = (ahci_private_data_t){
-                .port = &abar->ports[i],
-                .part = NULL,
+              .port = &abar->ports[i],
+              .part = NULL,
             };
 
             partition_layout_t *part = probe_mbr(dev, p);
@@ -330,20 +330,20 @@ void ahci_init_abars() {
 
           device_t *main_dev = kmalloc(sizeof(device_t));
           *main_dev = (device_t){
-              .private_data = kmalloc(sizeof(ahci_private_data_t)),
-              .name = "SATA",
-              .type = S_IFBLK,
-              .block_count = 0, // TODO: figure out block count
-              .block_size = 512,
-              .read = sata_read,
-              .write = sata_write,
+            .private_data = kmalloc(sizeof(ahci_private_data_t)),
+            .name = "SATA",
+            .type = S_IFBLK,
+            .block_count = 0, // TODO: figure out block count
+            .block_size = 512,
+            .read = sata_read,
+            .write = sata_write,
           };
 
           *((ahci_private_data_t *)main_dev->private_data) =
-              (ahci_private_data_t){
-                  .port = &abar->ports[i],
-                  .part = NULL,
-              };
+            (ahci_private_data_t){
+              .port = &abar->ports[i],
+              .part = NULL,
+            };
 
           device_add(main_dev);
         }

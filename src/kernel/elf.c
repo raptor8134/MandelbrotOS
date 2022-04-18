@@ -27,8 +27,7 @@ static inline elf_sect_header_t *elf_sheader(elf_header_t *hdr) {
   return (elf_sect_header_t *)((uintptr_t)(uint64_t)hdr + hdr->sect_head_off);
 }
 
-uint8_t elf_run_binary(char *name, char *path, proc_t *proc, size_t time_slice,
-                       uint64_t arg1, uint64_t arg2, uint64_t arg3) {
+uint8_t elf_run_binary(char *path, proc_t *proc, int auto_enqueue) {
   fs_file_t *file = vfs_open(path);
   uint8_t *buffer = kmalloc(file->length);
   vfs_read(file, buffer, 0, file->length);
@@ -46,21 +45,21 @@ uint8_t elf_run_binary(char *name, char *path, proc_t *proc, size_t time_slice,
     if (!sect_header->size)
       continue;
     else if (sect_header->type == ELF_SECT_NOBITS) {
-      uintptr_t mem = (uintptr_t)pmalloc(
-          ALIGN_UP(sect_header->size, PAGE_SIZE) / PAGE_SIZE);
+      uintptr_t mem =
+        (uintptr_t)pmalloc(ALIGN_UP(sect_header->size, PAGE_SIZE) / PAGE_SIZE);
       for (size_t j = 0; j < ALIGN_UP(sect_header->size, PAGE_SIZE) / PAGE_SIZE;
            j += PAGE_SIZE)
         vmm_map_page(proc->pagemap, mem + j, sect_header->addr + j, 0b111);
 
       mmap_range_t *mmap_range = kmalloc(sizeof(mmap_range_t));
       *mmap_range = (mmap_range_t){
-          .file = NULL,
-          .flags = MAP_FIXED | MAP_ANON,
-          .length = ALIGN_UP(sect_header->size, PAGE_SIZE),
-          .offset = 0,
-          .prot = PROT_READ | PROT_WRITE | PROT_EXEC,
-          .phys_addr = mem,
-          .virt_addr = sect_header->addr,
+        .file = NULL,
+        .flags = MAP_FIXED | MAP_ANON,
+        .length = ALIGN_UP(sect_header->size, PAGE_SIZE),
+        .offset = 0,
+        .prot = PROT_READ | PROT_WRITE | PROT_EXEC,
+        .phys_addr = mem,
+        .virt_addr = sect_header->addr,
       };
 
       vec_push(&proc->pagemap->ranges, mmap_range);
@@ -72,7 +71,7 @@ uint8_t elf_run_binary(char *name, char *path, proc_t *proc, size_t time_slice,
   for (size_t i = 0; i < header->prog_head_count; i++) {
     if (prog_header->type == ELF_HEAD_LOAD) {
       uintptr_t mem = (uintptr_t)pmalloc(
-          ALIGN_UP(prog_header->mem_size, PAGE_SIZE) / PAGE_SIZE);
+        ALIGN_UP(prog_header->mem_size, PAGE_SIZE) / PAGE_SIZE);
 
       for (size_t j = 0;
            j < ALIGN_UP(prog_header->mem_size, PAGE_SIZE) / PAGE_SIZE;
@@ -81,13 +80,13 @@ uint8_t elf_run_binary(char *name, char *path, proc_t *proc, size_t time_slice,
 
       mmap_range_t *mmap_range = kmalloc(sizeof(mmap_range_t));
       *mmap_range = (mmap_range_t){
-          .file = NULL,
-          .flags = MAP_FIXED | MAP_ANON,
-          .length = ALIGN_UP(prog_header->mem_size, PAGE_SIZE),
-          .offset = 0,
-          .prot = PROT_READ | PROT_WRITE | PROT_EXEC,
-          .phys_addr = mem,
-          .virt_addr = prog_header->virt_addr,
+        .file = NULL,
+        .flags = MAP_FIXED | MAP_ANON,
+        .length = ALIGN_UP(prog_header->mem_size, PAGE_SIZE),
+        .offset = 0,
+        .prot = PROT_READ | PROT_WRITE | PROT_EXEC,
+        .phys_addr = mem,
+        .virt_addr = prog_header->virt_addr,
       };
 
       vec_push(&proc->pagemap->ranges, mmap_range);
@@ -98,11 +97,13 @@ uint8_t elf_run_binary(char *name, char *path, proc_t *proc, size_t time_slice,
     }
 
     prog_header =
-        (elf_prog_header_t *)((uint16_t *)prog_header + header->prog_head_size);
+      (elf_prog_header_t *)((uint16_t *)prog_header + header->prog_head_size);
   }
 
-  sched_create_thread(name, (uintptr_t)header->entry, time_slice, 1, 1, proc,
-                      arg1, arg2, arg3);
+  proc->regs.rip = header->entry;
+
+  if (auto_enqueue)
+    sched_enqueue_proc(proc);
 
   return 0;
 }

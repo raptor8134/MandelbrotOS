@@ -34,6 +34,11 @@
 #define MAP_FIXED 0x4
 #define MAP_ANON 0x8
 
-uint64_t intsyscall(uint64_t id, uint64_t arg_1, uint64_t arg_2, uint64_t arg_3, uint64_t arg_4, uint64_t arg_5);
+#define SEEK_SET 0
+#define SEEK_CUR 1
+#define SEEK_END 2
+
+uint64_t intsyscall(uint64_t id, uint64_t arg_1, uint64_t arg_2, uint64_t arg_3,
+                    uint64_t arg_4, uint64_t arg_5);
 
 #endif

@@ -12,7 +12,7 @@
 
 #define SERIAL_LINE_ENABLE_DLAB (0x80)
 
-static volatile lock_t serial_lock = {0};
+static lock_t serial_lock = {0};
 
 void serial_conf_baud_rate(uint16_t base, uint16_t divisor) {
   outb(SERIAL_LINE_COMMAND_PORT(base), SERIAL_LINE_ENABLE_DLAB);

@@ -1,35 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
-
-#define SYSCALL_OPEN 0
-#define SYSCALL_CLOSE 1
-#define SYSCALL_READ 2
-#define SYSCALL_WRITE 3
-#define SYSCALL_EXEC 4
-#define SYSCALL_MMAP 5
-#define SYSCALL_MUNMAP 6
-#define SYSCALL_STAT 7
-#define SYSCALL_FSTAT 8
-#define SYSCALL_GETPID 9
-#define SYSCALL_EXIT 10
-#define SYSCALL_FORK 11
-#define SYSCALL_GETTIMEOFDAY 12
-#define SYSCALL_FSYNC 13
-#define SYSCALL_IOCTL 14
-
-#define IOCTL_FBDEV_GET_WIDTH 1
-#define IOCTL_FBDEV_GET_HEIGHT 2
-#define IOCTL_FBDEV_GET_BPP 3
-
-#define PROT_READ 0x1
-#define PROT_WRITE 0x2
-#define PROT_EXEC 0x4
-#define PROT_NONE 0x0
-
-#define MAP_PRIVATE 0x1
-#define MAP_SHARED 0x2
-#define MAP_FIXED 0x4
-#define MAP_ANON 0x8
+#include <sys/mandelbrot.h>
 
 uint16_t width;
 uint16_t height;
@@ -60,9 +31,9 @@ pixel_t hsv2rgb(float h, float s, float v) {
   if (s == 0) {
     // achromatic (grey)
     return (pixel_t){
-        .red = s,
-        .green = s,
-        .blue = s,
+      .red = s,
+      .green = s,
+      .blue = s,
     };
   }
   h /= 60; // sector 0 to 5
@@ -74,44 +45,44 @@ pixel_t hsv2rgb(float h, float s, float v) {
   switch (i) {
     case 0:
       return (pixel_t){
-          .red = v * 255,
-          .green = t * 255,
-          .blue = p * 255,
+        .red = v * 255,
+        .green = t * 255,
+        .blue = p * 255,
       };
       break;
     case 1:
       return (pixel_t){
-          .red = q * 255,
-          .green = v * 255,
-          .blue = p * 255,
+        .red = q * 255,
+        .green = v * 255,
+        .blue = p * 255,
       };
       break;
     case 2:
       return (pixel_t){
-          .red = p * 255,
-          .green = v * 255,
-          .blue = t * 255,
+        .red = p * 255,
+        .green = v * 255,
+        .blue = t * 255,
       };
       break;
     case 3:
       return (pixel_t){
-          .red = p * 255,
-          .green = q * 255,
-          .blue = v * 255,
+        .red = p * 255,
+        .green = q * 255,
+        .blue = v * 255,
       };
       break;
     case 4:
       return (pixel_t){
-          .red = t * 255,
-          .green = p * 255,
-          .blue = v * 255,
+        .red = t * 255,
+        .green = p * 255,
+        .blue = v * 255,
       };
       break;
     default: // case 5:
       return (pixel_t){
-          .red = v * 255,
-          .green = p * 255,
-          .blue = q * 255,
+        .red = v * 255,
+        .green = p * 255,
+        .blue = q * 255,
       };
       break;
   }
@@ -204,48 +175,33 @@ typedef struct mmap_args {
 } mmap_args_t;
 
 void main() {
-  size_t val = intsyscall(SYSCALL_FORK, 0, 0, 0, 0, 0);
-
   /* char msg[] = "In ring 3! Got a PID of  \r\n"; */
   /* size_t len = strlen(msg); */
   /* msg[len - 3] = val + '0'; */
-
-  /* intsyscall(SYSCALL_WRITE, 1, (uint64_t)msg, 0, len, 0); */
-
-  if (val > 0) {
-    char msg[] = "Hello from the parent thread!\r\n";
-    intsyscall(SYSCALL_WRITE, 1, (uint64_t)msg, 0, strlen(msg), 0);
-  } else {
-    /* int syscall_execve(char *name, char *path, char *argv, char *env) { */
-    char argc[10] = {0};
-    char argv[10] = {0};
-    intsyscall(SYSCALL_EXEC, (uint64_t) "pp", (uint64_t) "/prog/trig",
-               (uint64_t)argc, (uint64_t)argv, 0);
-  }
 
   /* while (1) */
   /* ; */
 
   size_t fd = intsyscall(SYSCALL_OPEN, (uint64_t) "/dev/fb0", 0, 0, 0, 0);
 
-  width = intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_WIDTH, (uint64_t)NULL,
-                     0, 0);
-  height = intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT, (uint64_t)NULL,
-                      0, 0);
-  size_t bpp = intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT,
-                          (uint64_t)NULL, 0, 0);
+  width =
+    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_WIDTH, (uint64_t)NULL, 0, 0);
+  height =
+    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT, (uint64_t)NULL, 0, 0);
+  size_t bpp =
+    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT, (uint64_t)NULL, 0, 0);
 
   mmap_args_t args = (mmap_args_t){
-      .addr = NULL,
-      .fd = fd,
-      .length = width * height * (bpp / 8),
-      .offset = 0,
-      .prot = PROT_READ | PROT_WRITE,
-      .flags = 0,
+    .addr = NULL,
+    .fd = fd,
+    .length = width * height * (bpp / 8),
+    .offset = 0,
+    .prot = PROT_READ | PROT_WRITE,
+    .flags = 0,
   };
 
   framebuffer =
-      (uint32_t *)intsyscall(SYSCALL_MMAP, (uint64_t)&args, 0, 0, 0, 0);
+    (uint32_t *)intsyscall(SYSCALL_MMAP, (uint64_t)&args, 0, 0, 0, 0);
 
   for (size_t i = 0; i < width * height; i++)
     framebuffer[i] = 0xffffff;
@@ -299,19 +255,19 @@ void main() {
     double angle = 0;
 
     int64_t prev_y1 =
-        (height / 2) - (int64_t)(amp * sin((angle * 3.14159) / 180));
+      (height / 2) - (int64_t)(amp * sin((angle * 3.14159) / 180));
     int64_t prev_y2 =
-        (height / 2) - (int64_t)(amp * sin(((angle + 120) * 3.14159) / 180));
+      (height / 2) - (int64_t)(amp * sin(((angle + 120) * 3.14159) / 180));
     int64_t prev_y3 =
-        (height / 2) - (int64_t)(amp * sin(((angle + 240) * 3.14159) / 180));
+      (height / 2) - (int64_t)(amp * sin(((angle + 240) * 3.14159) / 180));
 
     for (size_t x = 0; x < width; x++, angle += ang_inc) {
       double yo = amp * sin((angle * 3.14159) / 180);
       int64_t y = ((double)height / 2) - yo;
 
       draw_line(
-          x, y, (x > 0) ? x - 1 : 0, prev_y1,
-          rgb2hex(hsv2rgb((((double)x / (double)width) * 360 + 0), 1, 1)));
+        x, y, (x > 0) ? x - 1 : 0, prev_y1,
+        rgb2hex(hsv2rgb((((double)x / (double)width) * 360 + 0), 1, 1)));
 
       prev_y1 = y;
 
@@ -319,8 +275,8 @@ void main() {
       y = ((double)height / 2) - yo;
 
       draw_line(
-          x, y, (x > 0) ? x - 1 : 0, prev_y2,
-          rgb2hex(hsv2rgb((((double)x / (double)width) * 360 + 120), 1, 1)));
+        x, y, (x > 0) ? x - 1 : 0, prev_y2,
+        rgb2hex(hsv2rgb((((double)x / (double)width) * 360 + 120), 1, 1)));
 
       prev_y2 = y;
 
@@ -328,8 +284,8 @@ void main() {
       y = ((double)height / 2) - yo;
 
       draw_line(
-          x, y, (x > 0) ? x - 1 : 0, prev_y3,
-          rgb2hex(hsv2rgb((((double)x / (double)width) * 360 + 240), 1, 1)));
+        x, y, (x > 0) ? x - 1 : 0, prev_y3,
+        rgb2hex(hsv2rgb((((double)x / (double)width) * 360 + 240), 1, 1)));
 
       prev_y3 = y;
 

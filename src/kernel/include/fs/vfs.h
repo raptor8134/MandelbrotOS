@@ -41,7 +41,8 @@
 #define S_IRWXO (S_IROTH | S_IWOTH | S_IXOTH)
 
 #define SEEK_SET 0
-#define SEEK_REL 1
+#define SEEK_CUR 1
+#define SEEK_END 2
 
 #define S_ISCHR(n) ((n & S_IFMT) == S_IFCHR)
 #define S_ISBLK(n) ((n & S_IFMT) == S_IFBLK)

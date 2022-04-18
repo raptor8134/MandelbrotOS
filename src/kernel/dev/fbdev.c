@@ -15,20 +15,19 @@ void *fb_mmap(device_t *dev, pagemap_t *pg, syscall_file_t *sfile, void *addr,
 
   for (size_t i = 0; i < size; i += PAGE_SIZE)
     vmm_map_page(
-        pg,
-        (uintptr_t)vmm_virt_to_phys(&kernel_pagemap, (uintptr_t)framebuffer) +
-            i,
-        (uintptr_t)addr + i, (prot & PROT_WRITE) ? 0b111 : 0b101);
+      pg,
+      (uintptr_t)vmm_virt_to_phys(&kernel_pagemap, (uintptr_t)framebuffer) + i,
+      (uintptr_t)addr + i, (prot & PROT_WRITE) ? 0b111 : 0b101);
 
   mmap_range_t *mmap_range = kmalloc(sizeof(mmap_range_t));
   *mmap_range = (mmap_range_t){
-      .file = sfile,
-      .flags = flags,
-      .length = size,
-      .offset = offset,
-      .prot = prot,
-      .phys_addr = vmm_virt_to_phys(&kernel_pagemap, (uintptr_t)framebuffer),
-      .virt_addr = (uintptr_t)addr,
+    .file = sfile,
+    .flags = flags,
+    .length = size,
+    .offset = offset,
+    .prot = prot,
+    .phys_addr = vmm_virt_to_phys(&kernel_pagemap, (uintptr_t)framebuffer),
+    .virt_addr = (uintptr_t)addr,
   };
 
   vec_push(&pg->ranges, mmap_range);
@@ -72,17 +71,17 @@ uint64_t fb_ioctl(device_t *dev, uint64_t cmd, void *arg) {
 }
 
 device_t fb0 = (device_t){
-    .block_count = 0,
-    .block_size = 0,
-    .fs = NULL,
-    .id = 1010,
-    .name = "fb0",
-    .private_data = NULL,
-    .read = fb_read,
-    .write = fb_write,
-    .mmap = fb_mmap,
-    .ioctl = fb_ioctl,
-    .type = S_IFCHR,
+  .block_count = 0,
+  .block_size = 0,
+  .fs = NULL,
+  .id = 1010,
+  .name = "fb0",
+  .private_data = NULL,
+  .read = fb_read,
+  .write = fb_write,
+  .mmap = fb_mmap,
+  .ioctl = fb_ioctl,
+  .type = S_IFCHR,
 };
 
 int init_fbdev(char *mount_place) {

@@ -56,9 +56,9 @@ pixel_t hsv2rgb(float h, float s, float v) {
   if (s == 0) {
     // achromatic (grey)
     return (pixel_t){
-        .red = s,
-        .green = s,
-        .blue = s,
+      .red = s,
+      .green = s,
+      .blue = s,
     };
   }
   h /= 60; // sector 0 to 5
@@ -70,44 +70,44 @@ pixel_t hsv2rgb(float h, float s, float v) {
   switch (i) {
     case 0:
       return (pixel_t){
-          .red = v * 255,
-          .green = t * 255,
-          .blue = p * 255,
+        .red = v * 255,
+        .green = t * 255,
+        .blue = p * 255,
       };
       break;
     case 1:
       return (pixel_t){
-          .red = q * 255,
-          .green = v * 255,
-          .blue = p * 255,
+        .red = q * 255,
+        .green = v * 255,
+        .blue = p * 255,
       };
       break;
     case 2:
       return (pixel_t){
-          .red = p * 255,
-          .green = v * 255,
-          .blue = t * 255,
+        .red = p * 255,
+        .green = v * 255,
+        .blue = t * 255,
       };
       break;
     case 3:
       return (pixel_t){
-          .red = p * 255,
-          .green = q * 255,
-          .blue = v * 255,
+        .red = p * 255,
+        .green = q * 255,
+        .blue = v * 255,
       };
       break;
     case 4:
       return (pixel_t){
-          .red = t * 255,
-          .green = p * 255,
-          .blue = v * 255,
+        .red = t * 255,
+        .green = p * 255,
+        .blue = v * 255,
       };
       break;
     default: // case 5:
       return (pixel_t){
-          .red = v * 255,
-          .green = p * 255,
-          .blue = q * 255,
+        .red = v * 255,
+        .green = p * 255,
+        .blue = q * 255,
       };
       break;
   }
@@ -125,24 +125,24 @@ typedef struct mmap_args {
 void main() {
   size_t fd = intsyscall(SYSCALL_OPEN, (uint64_t) "/dev/fb0", 0, 0, 0, 0);
 
-  width = intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_WIDTH, (uint64_t)NULL,
-                     0, 0);
-  height = intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT, (uint64_t)NULL,
-                      0, 0);
-  size_t bpp = intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT,
-                          (uint64_t)NULL, 0, 0);
+  width =
+    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_WIDTH, (uint64_t)NULL, 0, 0);
+  height =
+    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT, (uint64_t)NULL, 0, 0);
+  size_t bpp =
+    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT, (uint64_t)NULL, 0, 0);
 
   mmap_args_t args = (mmap_args_t){
-      .addr = NULL,
-      .fd = fd,
-      .length = width * height * (bpp / 8),
-      .offset = 0,
-      .prot = PROT_READ | PROT_WRITE,
-      .flags = 0,
+    .addr = NULL,
+    .fd = fd,
+    .length = width * height * (bpp / 8),
+    .offset = 0,
+    .prot = PROT_READ | PROT_WRITE,
+    .flags = 0,
   };
 
   framebuffer =
-      (uint32_t *)intsyscall(SYSCALL_MMAP, (uint64_t)&args, 0, 0, 0, 0);
+    (uint32_t *)intsyscall(SYSCALL_MMAP, (uint64_t)&args, 0, 0, 0, 0);
 
   pixel_t *fb_pix = (void *)framebuffer;
 

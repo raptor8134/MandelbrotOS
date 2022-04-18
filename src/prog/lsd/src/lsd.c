@@ -57,24 +57,24 @@ typedef struct mmap_args {
 void main() {
   size_t fd = intsyscall(SYSCALL_OPEN, (uint64_t) "/dev/fb0", 0, 0, 0, 0);
 
-  width = intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_WIDTH, (uint64_t)NULL,
-                     0, 0);
-  height = intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT, (uint64_t)NULL,
-                      0, 0);
-  size_t bpp = intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT,
-                          (uint64_t)NULL, 0, 0);
+  width =
+    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_WIDTH, (uint64_t)NULL, 0, 0);
+  height =
+    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT, (uint64_t)NULL, 0, 0);
+  size_t bpp =
+    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT, (uint64_t)NULL, 0, 0);
 
   mmap_args_t args = (mmap_args_t){
-      .addr = NULL,
-      .fd = fd,
-      .length = width * height * (bpp / 8),
-      .offset = 0,
-      .prot = PROT_READ | PROT_WRITE,
-      .flags = 0,
+    .addr = NULL,
+    .fd = fd,
+    .length = width * height * (bpp / 8),
+    .offset = 0,
+    .prot = PROT_READ | PROT_WRITE,
+    .flags = 0,
   };
 
   framebuffer =
-      (uint32_t *)intsyscall(SYSCALL_MMAP, (uint64_t)&args, 0, 0, 0, 0);
+    (uint32_t *)intsyscall(SYSCALL_MMAP, (uint64_t)&args, 0, 0, 0, 0);
 
   pixel_t *fb_pix = (void *)framebuffer;
 
@@ -85,11 +85,11 @@ void main() {
       for (size_t y = 0; y < height; y++) {
         size_t raw_pos = x + y * width;
         fb_pix[raw_pos].blue =
-            (x * 4 + current_offset) ^ (y * 4 + current_offset);
+          (x * 4 + current_offset) ^ (y * 4 + current_offset);
         fb_pix[raw_pos].red =
-            (y * 1 + current_offset) ^ (x * 1 + current_offset);
+          (y * 1 + current_offset) ^ (x * 1 + current_offset);
         fb_pix[raw_pos].green =
-            (y * 2 + current_offset) ^ (x * 2 + current_offset);
+          (y * 2 + current_offset) ^ (x * 2 + current_offset);
 
         /* fb_pix[raw_pos].blue = y + current_offset; */
         /* fb_pix[raw_pos].red = x + current_offset; */

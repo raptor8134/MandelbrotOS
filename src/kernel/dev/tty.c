@@ -28,15 +28,15 @@ ssize_t tty_read(device_t *dev, size_t start, size_t count, uint8_t *buf) {
 }
 
 static device_t tty0 = (device_t){
-    .block_count = 0,
-    .block_size = 0,
-    .fs = NULL,
-    .id = 100,
-    .name = "tty0",
-    .private_data = NULL,
-    .read = tty_read,
-    .write = tty_write,
-    .type = S_IFCHR,
+  .block_count = 0,
+  .block_size = 0,
+  .fs = NULL,
+  .id = 100,
+  .name = "tty0",
+  .private_data = NULL,
+  .read = tty_read,
+  .write = tty_write,
+  .type = S_IFCHR,
 };
 
 int init_tty(char *mount_place) {

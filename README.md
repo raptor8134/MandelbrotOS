@@ -58,7 +58,7 @@ Mandelbrot is coded to some specific standards. They are
 - Code in GNU99 compatible C and NASM compatible assembler
 - Use stdint.h and stddef.h variable declerations for standard number sizes
 - Make sure all custom typedefs end it `_t` 
-- Once everything is done, clang format with the command `bash -c 'find src/. -type f \\( -iname \\*.h -o -iname \\*.c \\) -exec clang-format -i -style="{IndentWidth: 2,TabWidth: 2,IndentGotoLabels: true,IndentCaseLabels: true,KeepEmptyLinesAtTheStartOfBlocks: true}" {} \\;'`
+- Once everything is done, clang format with the command `bash -c 'find ./src -type f \\( -iname \\*.h -o -iname \\*.c \\) -exec clang-format -i -style="{IndentWidth: 2,TabWidth: 2,IndentGotoLabels: true,IndentCaseLabels: true,KeepEmptyLinesAtTheStartOfBlocks: true,ConstructorInitializerIndentWidth: 2, ContinuationIndentWidth: 2,}" {} \\;'`
 
 
 # Extern code

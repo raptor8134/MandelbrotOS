@@ -44,7 +44,7 @@ void fb_putpixel(size_t x, size_t y, uint32_t colour) {
 }
 
 void putnc(int x, int y, char c, uint32_t fgc, uint32_t bgc) {
-  for (int ly = 0; ly < FONT_HEIGHT; ly++) {
+  for (int ly = 0; ly < FONT_HEIGHT; ly++)
     for (int lx = 0; lx < FONT_WIDTH; lx++) {
       uint8_t pixel = font_array[(c * FONT_CHAR_DEFINITION) + ly];
       if ((pixel >> lx) & 1)
@@ -52,7 +52,6 @@ void putnc(int x, int y, char c, uint32_t fgc, uint32_t bgc) {
       else
         framebuffer[x + ((FONT_WIDTH - 1) - lx) + ((y + ly) * fb_width)] = bgc;
     }
-  }
 }
 
 void knewline() {
@@ -94,8 +93,3 @@ void putc(char c, uint32_t fgc, uint32_t bgc) {
 }
 
 void putchar(char c) { putc(c, curr_fg_col, curr_bg_col); }
-
-void puts(char *c) {
-  while (*c)
-    putchar(*c++);
-}

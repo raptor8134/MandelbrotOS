@@ -20,24 +20,24 @@ static uintptr_t get_device_addr(mcfg_entry_t *entry, uint8_t bus,
 }
 
 uint8_t pci_read_8(pci_device_t *dev, uint16_t offset) {
-  return *(volatile uint8_t *)(get_device_addr(
-                                   get_entry(dev->segment, dev->bus), dev->bus,
-                                   dev->device, dev->function) +
-                               offset);
+  return *(
+    volatile uint8_t *)(get_device_addr(get_entry(dev->segment, dev->bus),
+                                        dev->bus, dev->device, dev->function) +
+                        offset);
 }
 
 uint16_t pci_read_16(pci_device_t *dev, uint16_t offset) {
-  return *(volatile uint16_t *)(get_device_addr(
-                                    get_entry(dev->segment, dev->bus), dev->bus,
-                                    dev->device, dev->function) +
-                                offset);
+  return *(
+    volatile uint16_t *)(get_device_addr(get_entry(dev->segment, dev->bus),
+                                         dev->bus, dev->device, dev->function) +
+                         offset);
 }
 
 uint32_t pci_read_32(pci_device_t *dev, uint16_t offset) {
-  return *(volatile uint32_t *)(get_device_addr(
-                                    get_entry(dev->segment, dev->bus), dev->bus,
-                                    dev->device, dev->function) +
-                                offset);
+  return *(
+    volatile uint32_t *)(get_device_addr(get_entry(dev->segment, dev->bus),
+                                         dev->bus, dev->device, dev->function) +
+                         offset);
 }
 
 void pci_write_8(pci_device_t *dev, uint16_t offset, uint8_t data) {
@@ -77,7 +77,7 @@ pci_bar_t pci_get_bar(pci_device_t *dev, uint8_t barno) {
         break;
       case 2: // 64 bits
         bar.base = ((uint64_t)pci_read_32(dev, ((0x10 + (bar_val * 4)) + 4)))
-                       << 32 |
+                     << 32 |
                    (bar_val & 0xfffffff0);
         break;
     }

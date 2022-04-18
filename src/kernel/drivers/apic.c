@@ -113,7 +113,7 @@ madt_ioapic_t *get_ioapic_by_gsi(uint32_t gsi) {
 
     if (ioapic->gsi <= gsi &&
         ioapic->gsi + ioapic_get_gsi_count(ioapic->address + PHYS_MEM_OFFSET) >
-            gsi)
+          gsi)
       return ioapic;
   }
   return NULL;

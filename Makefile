@@ -60,3 +60,8 @@ docker_build:
 
 clean:
 	@ rm -rf $(BUILD_DIRECTORY) $(HDD) $(KERNEL)
+
+deep-clean:
+	@ rm -rf $(BUILD_DIRECTORY) $(HDD) $(KERNEL)
+	@ cd src/prog && make clean
+	@ cd src/libc && make clean

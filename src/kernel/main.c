@@ -75,18 +75,16 @@ void k_thread() {
 
   syscall_file_t *fil = kmalloc(sizeof(syscall_file_t));
   *fil = (syscall_file_t){
-      .file = tty0,
-      .fd = 1,
-      .dirty = 0,
-      .buf = NULL,
-      .is_buffered = 0,
+    .file = tty0,
+    .fd = 1,
+    .offset = 0,
   };
 
-  proc_t *user_proc = sched_create_proc("u_proc", 1);
+  proc_t *user_proc = sched_new_proc(0, 0, 1, 0, NULL, 0, 0, 0);
   vec_push(&user_proc->fds, fil);
   user_proc->last_fd = 2;
 
-  elf_run_binary("mandelbrot", "/prog/mandelbrot", user_proc, 5000, 0, 0, 0);
+  elf_run_binary("/prog/mandelbrot", user_proc, 1);
 
   while (1)
     ;
@@ -94,17 +92,17 @@ void k_thread() {
 
 void kernel_main(struct stivale2_struct *bootloader_info) {
   struct stivale2_struct_tag_framebuffer *framebuffer_info =
-      (struct stivale2_struct_tag_framebuffer *)stivale2_get_tag(
-          bootloader_info, STIVALE2_STRUCT_TAG_FRAMEBUFFER_ID);
+    (struct stivale2_struct_tag_framebuffer *)stivale2_get_tag(
+      bootloader_info, STIVALE2_STRUCT_TAG_FRAMEBUFFER_ID);
   struct stivale2_struct_tag_memmap *memory_info =
-      (struct stivale2_struct_tag_memmap *)stivale2_get_tag(
-          bootloader_info, STIVALE2_STRUCT_TAG_MEMMAP_ID);
+    (struct stivale2_struct_tag_memmap *)stivale2_get_tag(
+      bootloader_info, STIVALE2_STRUCT_TAG_MEMMAP_ID);
   struct stivale2_struct_tag_rsdp *rsdp_info =
-      (struct stivale2_struct_tag_rsdp *)stivale2_get_tag(
-          bootloader_info, STIVALE2_STRUCT_TAG_RSDP_ID);
+    (struct stivale2_struct_tag_rsdp *)stivale2_get_tag(
+      bootloader_info, STIVALE2_STRUCT_TAG_RSDP_ID);
   struct stivale2_struct_tag_smp *smp_info =
-      (struct stivale2_struct_tag_smp *)stivale2_get_tag(
-          bootloader_info, STIVALE2_STRUCT_TAG_SMP_ID);
+    (struct stivale2_struct_tag_smp *)stivale2_get_tag(
+      bootloader_info, STIVALE2_STRUCT_TAG_SMP_ID);
 
   enable_sse();
 
@@ -124,5 +122,5 @@ void kernel_main(struct stivale2_struct *bootloader_info) {
   klog_init(init_acpi(rsdp_info), "ACPI");
   klog_init(init_smp(smp_info), "SMP");
 
-  scheduler_init((uintptr_t)k_thread, smp_info);
+  scheduler_init((uintptr_t)k_thread);
 }

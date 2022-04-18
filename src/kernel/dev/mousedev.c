@@ -51,17 +51,17 @@ uint64_t mousedev_ioctl(device_t *dev, uint64_t cmd, void *arg) {
 }
 
 device_t mouse0 = (device_t){
-    .block_count = 0,
-    .block_size = 3,
-    .fs = NULL,
-    .id = 1011,
-    .name = "mouse0",
-    .private_data = NULL,
-    .read = mousedev_read,
-    .write = mousedev_write,
-    .mmap = mousedev_mmap,
-    .ioctl = mousedev_ioctl,
-    .type = S_IFBLK,
+  .block_count = 0,
+  .block_size = 3,
+  .fs = NULL,
+  .id = 1011,
+  .name = "mouse0",
+  .private_data = NULL,
+  .read = mousedev_read,
+  .write = mousedev_write,
+  .mmap = mousedev_mmap,
+  .ioctl = mousedev_ioctl,
+  .type = S_IFBLK,
 };
 
 int init_mousedev(char *mount_place) {

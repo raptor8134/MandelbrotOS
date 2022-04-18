@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <sys/gdt.h>
 
-static volatile lock_t gdt_lock = {0};
+static lock_t gdt_lock = {0};
 
 static gdt_t gdt;
 static gdt_pointer_t gdt_ptr;
@@ -84,14 +84,14 @@ void set_and_load_tss(uintptr_t addr) {
   LOCK(gdt_lock);
 
   gdt.tss = (tss_entry_t){
-      .length = sizeof(tss_entry_t),
-      .base_low = addr & 0xffff,
-      .base_mid = (addr >> 16) & 0xff,
-      .flags1 = 0b10001001,
-      .flags2 = 0,
-      .base_high = (addr >> 24) & 0xff,
-      .base_upper = addr >> 32,
-      .reserved = 0,
+    .length = sizeof(tss_entry_t),
+    .base_low = addr & 0xffff,
+    .base_mid = (addr >> 16) & 0xff,
+    .flags1 = 0b10001001,
+    .flags2 = 0,
+    .base_high = (addr >> 24) & 0xff,
+    .base_upper = addr >> 32,
+    .reserved = 0,
   };
 
   load_tss(GDT_SEG_TSS);

@@ -11,7 +11,7 @@ partition_layout_t *probe_mbr(device_t *dev, size_t num) {
   dev->read(dev, 0, 1, boot_sec);
 
   mbr_partition_table_t *partitions =
-      (void *)&boot_sec[0x1be]; // Offset of the first partition
+    (void *)&boot_sec[0x1be]; // Offset of the first partition
 
   if (!partitions[num].system_id)
     return NULL;
@@ -19,9 +19,9 @@ partition_layout_t *probe_mbr(device_t *dev, size_t num) {
   partition_layout_t *part = kmalloc(sizeof(partition_layout_t));
 
   *part = (partition_layout_t){
-      .sector_start = partitions[num].lba_partition_start,
-      .length_in_sectors = partitions[num].lba_sectors_count,
-      .partition_number = num,
+    .sector_start = partitions[num].lba_partition_start,
+    .length_in_sectors = partitions[num].lba_sectors_count,
+    .partition_number = num,
   };
 
   return part;

@@ -52,7 +52,7 @@ void vmm_map_page(pagemap_t *pagemap, uintptr_t physical_address,
   uint64_t *pml1 = vmm_get_next_level(pml2, pml_entry2, flags);
 
   *(uint64_t *)((uint64_t)pml1 + PHYS_MEM_OFFSET + pml_entry1 * 8) =
-      physical_address | flags;
+    physical_address | flags;
 
   vmm_invalidate_tlb(pagemap, virtual_address);
 
@@ -106,21 +106,21 @@ void vmm_memcpy(pagemap_t *pagemap_1, uintptr_t virtual_address_1,
                 pagemap_t *pagemap_2, uintptr_t virtual_address_2,
                 size_t count) {
   uintptr_t aligned_virtual_address_1 =
-      ALIGN_DOWN(virtual_address_1, PAGE_SIZE);
+    ALIGN_DOWN(virtual_address_1, PAGE_SIZE);
   uintptr_t aligned_virtual_address_2 =
-      ALIGN_DOWN(virtual_address_2, PAGE_SIZE);
+    ALIGN_DOWN(virtual_address_2, PAGE_SIZE);
 
   uint8_t *phys_addr_1 =
-      (uint8_t *)vmm_virt_to_phys(pagemap_1, aligned_virtual_address_1);
+    (uint8_t *)vmm_virt_to_phys(pagemap_1, aligned_virtual_address_1);
   uint8_t *phys_addr_2 =
-      (uint8_t *)vmm_virt_to_phys(pagemap_2, aligned_virtual_address_2);
+    (uint8_t *)vmm_virt_to_phys(pagemap_2, aligned_virtual_address_2);
 
   size_t align_difference_1 = virtual_address_1 - aligned_virtual_address_1;
   size_t align_difference_2 = virtual_address_2 - aligned_virtual_address_2;
 
   for (size_t i = 0; i < count; i++) {
     *(phys_addr_1 + PHYS_MEM_OFFSET + align_difference_1) =
-        *(phys_addr_2 + PHYS_MEM_OFFSET + align_difference_2);
+      *(phys_addr_2 + PHYS_MEM_OFFSET + align_difference_2);
 
     if (!((++align_difference_1 + 1) % PAGE_SIZE)) {
       align_difference_1 = 0;
@@ -129,7 +129,7 @@ void vmm_memcpy(pagemap_t *pagemap_1, uintptr_t virtual_address_1,
 
       aligned_virtual_address_1 = ALIGN_DOWN(virtual_address_1, PAGE_SIZE);
       phys_addr_1 =
-          (uint8_t *)vmm_virt_to_phys(pagemap_1, aligned_virtual_address_1);
+        (uint8_t *)vmm_virt_to_phys(pagemap_1, aligned_virtual_address_1);
     }
 
     if (!((++align_difference_2 + 1) % PAGE_SIZE)) {
@@ -139,7 +139,7 @@ void vmm_memcpy(pagemap_t *pagemap_1, uintptr_t virtual_address_1,
 
       aligned_virtual_address_2 = ALIGN_DOWN(virtual_address_2, PAGE_SIZE);
       phys_addr_2 =
-          (uint8_t *)vmm_virt_to_phys(pagemap_2, aligned_virtual_address_2);
+        (uint8_t *)vmm_virt_to_phys(pagemap_2, aligned_virtual_address_2);
     }
   }
 }
@@ -188,8 +188,8 @@ pagemap_t *vmm_fork_pagemap(pagemap_t *pg) {
         memcpy((void *)mem, (void *)range->phys_addr, range->length);
       } else {
         uintptr_t mem = (uintptr_t)vfs_mmap(
-            range->file->file, new_pg, range->file, (void *)range->virt_addr,
-            range->length, range->offset, range->flags, range->prot);
+          range->file->file, new_pg, range->file, (void *)range->virt_addr,
+          range->length, range->offset, range->flags, range->prot);
 
         *new_range = *range;
         new_range->phys_addr = mem;
