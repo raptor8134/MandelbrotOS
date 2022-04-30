@@ -486,6 +486,15 @@ void *fat_mmap(fs_file_t *file, pagemap_t *pg, syscall_file_t *sfile,
   return NULL;
 }
 
+fs_file_t *fat_mkfifo(fs_t *fs, char *path, int mode, int uid, int gid) {
+  (void)fs;
+  (void)path;
+  (void)mode;
+  (void)uid;
+  (void)gid;
+  return NULL;
+}
+
 int fat_truncate(fs_file_t *file, size_t size) {
   size_t index = ((fat_file_private_info_t *)file->private_data)->index;
   uint32_t dir =
@@ -761,7 +770,7 @@ file_ops_t fat_file_ops = (file_ops_t){
 fs_file_t *fat_open(fs_t *fs, char *path) {
   fat_file_private_info_t *priv = kmalloc(sizeof(fat_file_private_info_t));
   if ((priv->cluster = fat_find(fs->dev, 0, &priv->dir, &priv->parent_cluster,
-                                &priv->index, path)) == 0xffffff8)
+                                &priv->index, path)) == 0xfffffff)
     return NULL;
 
   fs_file_t *file = kmalloc(sizeof(fs_file_t));
@@ -774,9 +783,9 @@ fs_file_t *fat_open(fs_t *fs, char *path) {
     .length = priv->dir.size,
     .inode = priv->cluster,
     .private_data = (void *)priv,
-    .mode = S_IREAD | S_IRGRP | S_IRUSR |
+    .mode = S_IRUSR | S_IRGRP | S_IROTH | S_IXUSR | S_IXGRP | S_IXOTH |
             ((priv->dir.directory) ? S_IFDIR : S_IFREG) |
-            ((!priv->dir.read_only) ? S_IWRITE | S_IWUSR | S_IWGRP : 0),
+            ((!priv->dir.read_only) ? S_IWUSR | S_IWGRP | S_IWOTH : 0),
 
     .last_access_time =
       rtc_mktime((datetime_t){.day = priv->dir.accessed_day,
@@ -804,6 +813,7 @@ fs_file_t *fat_open(fs_t *fs, char *path) {
       .seconds = priv->dir.created_second * 2 + (priv->dir.created_ticks % 2),
       .minutes = priv->dir.created_minute,
       .hours = priv->dir.created_hour}),
+    .offset = 0,
   };
 
   return file;
@@ -1314,6 +1324,7 @@ fs_ops_t fat_fs_ops = (fs_ops_t){
   .mount = fat_mount,
   .open = fat_open,
   .mknod = fat_mknod,
+  .mkfifo = fat_mkfifo,
 };
 
 int init_fat() {

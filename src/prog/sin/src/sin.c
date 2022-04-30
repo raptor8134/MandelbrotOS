@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/mandelbrot.h>
+#include <sys/mman.h>
 
 uint16_t width;
 uint16_t height;
@@ -155,24 +156,6 @@ double pow(double base, int exponent) {
     result *= base;
   return result;
 }
-
-size_t strlen(char *s) {
-  size_t count = 0;
-  while (*s != '\0') {
-    count++;
-    s++;
-  }
-  return count;
-}
-
-typedef struct mmap_args {
-  void *addr;
-  size_t length;
-  uint64_t flags;
-  uint64_t prot;
-  size_t fd;
-  size_t offset;
-} mmap_args_t;
 
 void main() {
   /* char msg[] = "In ring 3! Got a PID of  \r\n"; */

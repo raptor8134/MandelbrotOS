@@ -6,15 +6,23 @@ SECTIONS
   . = 4M;
 
   .text : ALIGN(4K) {
-    *(.text*)
+    *(.text)
   }
 
   .data : ALIGN(4K) {
-    *(.data*)
+    *(.data)
   }
 
   .bss : ALIGN(4K) {
     *(COMMON)
-    *(.bss*)
+    *(.bss)
+  }
+  
+  .rodata : ALIGN(4K) {
+    *(.rodata)
+  }
+
+  .eh_frame : ALIGN(4K) {
+    *(.eh_frame)
   }
 }

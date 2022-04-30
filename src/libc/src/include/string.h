@@ -1,0 +1,13 @@
+#ifndef __STRING_H__
+#define __STRING_H__
+
+#include <stddef.h>
+
+char *strchr(char *str, int c);
+size_t strlen(char *s);
+void memcpy(void *dest, void *src, size_t n);
+char *strdup(char *s1);
+int strncmp(char *s1, char *s2, size_t n);
+void strcat(char *dest, char *src);
+
+#endif

@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/mandelbrot.h>
+#include <sys/mman.h>
 
 #define ABS(x) ((x < 0) ? (-x) : x)
 
@@ -116,15 +117,6 @@ pixel_t hsv2rgb(float h, float s, float v) {
   }
 }
 
-typedef struct mmap_args {
-  void *addr;
-  size_t length;
-  uint64_t flags;
-  uint64_t prot;
-  size_t fd;
-  size_t offset;
-} mmap_args_t;
-
 uint32_t rgb2hex(pixel_t pix) {
   return (pix.red << 16) + (pix.green << 8) + pix.blue;
 }
@@ -224,7 +216,7 @@ int main() {
 #define COLOUR_DEPTH 100
 
   int max = 1000;
-  int threshold = 4;
+  int threshold = 200;
 
   double posx = 0;
   double posy = 0;
@@ -350,12 +342,14 @@ int main() {
            * / (double)max) * (360 - 280) + 280, 1, (double)iteration /
            * (double)(iteration + 5) + 0.1)); */
 
-          iteration = iteration + 1 - log(log(sqrt(x * x + y * y))) / log(2);
+          iteration = iteration + 2 -
+                      log(log(sqrt(x * x + y * y))) /
+                        0.69314718055994528622676398299518041312694549560546875;
 
           /* framebuffer[col + row * width] = rgb2hex(hsv2rgb(((double)iteration
            * / (double)max) * (360 - 260) + 260, 1, (double)iteration /
            * (double)(iteration + 5) + 0.1)); */
-          double a = iteration / 20.0;
+          double a = iteration / 30.0;
           double b = a - 1.0;
 
           if (a > 1.0)

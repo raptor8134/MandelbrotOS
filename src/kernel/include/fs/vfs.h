@@ -8,6 +8,21 @@
 #include <stdint.h>
 #include <vec.h>
 
+#define F_DUPFD 1
+
+#define R_OK 0x4
+#define W_OK 0x2
+#define X_OK 0x1
+#define F_OK 0x0
+
+#define O_RDONLY 0x1
+#define O_WRONLY 0x2
+#define O_RDWR 0x4
+#define O_CREAT 0x200
+#define O_DIRECTORY 0x200000
+#define O_EXEC 0x400000
+#define O_ACCMODE (O_RDONLY | O_WRONLY | O_RDWR)
+
 #define S_IFMT 0170000
 #define S_IFSOCK 0140000
 #define S_IFLNK 0120000
@@ -20,10 +35,6 @@
 #define S_ISUID 04000
 #define S_ISGID 02000
 #define S_ISVTX 01000
-
-#define S_IREAD 0400
-#define S_IWRITE 0200
-#define S_IEXEC 0100
 
 #define S_IRUSR 0400
 #define S_IWUSR 0200
@@ -49,6 +60,9 @@
 #define S_ISDIR(n) ((n & S_IFMT) == S_IFDIR)
 #define S_ISREG(n) ((n & S_IFMT) == S_IFREG)
 #define ISDEV(file) (S_ISCHR((file->mode)) || S_ISBLK((file->mode)))
+#define ISFIFO(file) ((file->mode & S_IFMT) == S_IFIFO)
+
+struct pipe;
 
 typedef signed long long int ssize_t;
 
@@ -85,6 +99,8 @@ typedef struct fs_ops {
   struct fs_file *(*mkdir)(struct fs *fs, char *path, int mode, int uid,
                            int gid);
   struct fs_file *(*create)(struct fs *fs, char *path, int mode, int uid,
+                            int gid);
+  struct fs_file *(*mkfifo)(struct fs *fs, char *path, int mode, int uid,
                             int gid);
   struct fs_file *(*mknod)(struct fs *fs, char *path, int mode, int uid,
                            int gid, device_t *dev);
@@ -123,6 +139,7 @@ typedef struct fs_file {
 
   fs_t *fs;
   device_t *dev;
+  struct pipe *pipe;
 
   posix_time_t last_access_time;
   posix_time_t last_modification_time;
@@ -133,6 +150,7 @@ typedef struct fs_file {
   size_t length;
   uint64_t inode;
   void *private_data;
+  size_t offset;
 } fs_file_t;
 
 typedef struct vfs_mount_info {
@@ -142,6 +160,9 @@ typedef struct vfs_mount_info {
 } vfs_mount_info_t;
 
 void vfs_register_fs(fs_ops_t *ops);
+int vfs_check_can_read(fs_file_t *file, int uid, int gid);
+int vfs_check_can_write(fs_file_t *file, int uid, int gid);
+int vfs_check_can_exec(fs_file_t *file, int uid, int gid);
 uint64_t vfs_ioctl(fs_file_t *file, uint64_t cmd, void *arg);
 void *vfs_mmap(fs_file_t *file, pagemap_t *pg, syscall_file_t *sfile,
                void *addr, size_t size, size_t offset, int prot, int flags);
@@ -159,6 +180,7 @@ int vfs_chown(fs_file_t *file, int uid, int gid);
 fs_file_t *vfs_mknod(char *path, int mode, int uid, int gid, device_t *dev);
 fs_file_t *vfs_mkdir(char *path, int mode, int uid, int gid);
 fs_file_t *vfs_create(char *path, int mode, int uid, int gid);
+fs_file_t *vfs_mkfifo(char *name, int mode, int uid, int gid, int named);
 fs_file_t *vfs_open(char *name);
 
 int init_vfs();

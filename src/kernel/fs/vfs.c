@@ -6,6 +6,7 @@
 #include <klog.h>
 #include <mm/kheap.h>
 #include <mm/vmm.h>
+#include <pipe/pipe.h>
 #include <printf.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -100,17 +101,57 @@ int vfs_mount(char *path, device_t *dev, char *fs_name) {
   return 0;
 }
 
+int vfs_check_can_read(fs_file_t *file, int uid, int gid) {
+  if (!uid)
+    return 0;
+  if (!(((uid == file->uid) && (file->mode & S_IRUSR)) |
+        ((gid == file->gid) && (file->mode & S_IRGRP)) |
+        (file->mode & S_IROTH)))
+    return 1;
+  return 0;
+}
+
+int vfs_check_can_write(fs_file_t *file, int uid, int gid) {
+  if (!uid)
+    return 0;
+  if (!(((uid == file->uid) && (file->mode & S_IWUSR)) |
+        ((gid == file->gid) && (file->mode & S_IWGRP)) |
+        (file->mode & S_IWOTH)))
+    return 1;
+  return 0;
+}
+
+int vfs_check_can_exec(fs_file_t *file, int uid, int gid) {
+  if (!uid)
+    return 0;
+  if (!(((uid == file->uid) && (file->mode & S_IXUSR)) |
+        ((gid == file->gid) && (file->mode & S_IXGRP)) |
+        (file->mode & S_IXOTH)))
+    return 1;
+  return 0;
+}
+
 void vfs_register_fs(fs_ops_t *ops) { vec_push(&registered_fses, ops); }
 
 ssize_t vfs_read(fs_file_t *file, uint8_t *buf, size_t offset, size_t count) {
-  if (ISDEV(file))
+  if (ISFIFO(file)) {
+    ssize_t ret = 0;
+    while (!(ret = pipe_read(file->pipe, buf, count)))
+      ;
+    return ret;
+  } else if (ISDEV(file))
     return device_read(file->dev, offset, count, buf);
   else
     return file->file_ops->read(file, buf, offset, count);
 }
 
 ssize_t vfs_write(fs_file_t *file, uint8_t *buf, size_t offset, size_t count) {
-  if (ISDEV(file))
+  if (ISFIFO(file)) {
+    ssize_t ret = 0;
+    while (!(ret = pipe_write(file->pipe, buf, count)))
+      ;
+    return ret;
+  } else if (ISDEV(file))
     return device_write(file->dev, offset, count, buf);
   else
     return file->file_ops->write(file, buf, offset, count);
@@ -118,7 +159,9 @@ ssize_t vfs_write(fs_file_t *file, uint8_t *buf, size_t offset, size_t count) {
 
 void *vfs_mmap(struct fs_file *file, pagemap_t *pg, syscall_file_t *sfile,
                void *addr, size_t size, size_t offset, int prot, int flags) {
-  if (ISDEV(file))
+  if (ISFIFO(file))
+    return 0;
+  else if (ISDEV(file))
     return file->dev->mmap(file->dev, pg, sfile, addr, size, offset, prot,
                            flags);
   else
@@ -156,7 +199,15 @@ int vfs_fstat(fs_file_t *file, stat_t *stat) {
   return 0;
 }
 
-int vfs_close(fs_file_t *file) { return file->file_ops->close(file); }
+int vfs_close(fs_file_t *file) {
+  if (ISFIFO(file) && !file->fs) {
+    pipe_free(file->pipe);
+    kfree(file->pipe);
+    kfree(file);
+    return 0;
+  }
+  return file->file_ops->close(file);
+}
 
 int vfs_readdir(fs_file_t *file, dirent_t *dirent, size_t pos) {
   return file->file_ops->readdir(file, dirent, pos);
@@ -189,6 +240,52 @@ fs_file_t *vfs_mkdir(char *path, int mode, int uid, int gid) {
   char *str =
     (strlen(path) == strlen(mi->path)) ? "/" : path + strlen(mi->path) - 1;
   return mi->fs->ops->mkdir(mi->fs, str, mode, uid, gid);
+}
+
+fs_file_t *vfs_mkfifo(char *name, int mode, int uid, int gid, int named) {
+  if (named) {
+    vfs_mount_info_t *mi = vfs_find_mount(name);
+    char *str =
+      (strlen(name) == strlen(mi->path)) ? "/" : name + strlen(mi->path) - 1;
+    return mi->fs->ops->mkfifo(mi->fs, str, mode, uid, gid);
+  }
+
+  posix_time_t tim = rtc_mktime(rtc_get_datetime());
+
+  fs_file_t *file = kmalloc(sizeof(fs_file_t));
+  *file = (fs_file_t){
+    .uid = uid,
+    .gid = gid,
+    .file_ops = NULL,
+    .fs = NULL,
+    .length = 0,
+    .inode = (uint64_t)file,
+    .private_data = NULL,
+    .mode = S_IFIFO | mode,
+    .last_access_time = tim,
+    .last_modification_time = tim,
+    .last_status_change_time = tim,
+    .creation_time = tim,
+    .pipe = kmalloc(sizeof(pipe_t)),
+  };
+
+  pipe_init(file->pipe, DEFAULT_PIPE_SIZE);
+
+  char *short_name = kmalloc(strlen(name));
+
+  for (size_t i = 0;; i++, name++) {
+    if (*name == '/' || !*name) {
+      short_name[i] = 0;
+      break;
+    }
+    short_name[i] = *name;
+  }
+
+  file->path = strdup(short_name);
+
+  kfree(short_name);
+
+  return file;
 }
 
 fs_file_t *vfs_create(char *path, int mode, int uid, int gid) {

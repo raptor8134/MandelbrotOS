@@ -17,4 +17,12 @@ SECTIONS
     *(COMMON)
     *(.bss)
   }
+  
+  .rodata : ALIGN(4K) {
+    *(.rodata)
+  }
+
+  .eh_frame : ALIGN(4K) {
+    *(.eh_frame)
+  }
 }

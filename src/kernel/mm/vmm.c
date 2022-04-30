@@ -163,8 +163,6 @@ pagemap_t *vmm_create_new_pagemap() {
   return new_map;
 }
 
-#include <printf.h>
-
 pagemap_t *vmm_fork_pagemap(pagemap_t *pg) {
   pagemap_t *new_pg = vmm_create_new_pagemap();
 
@@ -200,6 +198,21 @@ pagemap_t *vmm_fork_pagemap(pagemap_t *pg) {
   }
 
   return new_pg;
+}
+
+void vmm_destroy_pagemap(pagemap_t *pagemap) {
+  for (size_t i = 0; i < (size_t)pagemap->ranges.length; i++) {
+    for (size_t j = 0; j < pagemap->ranges.data[i]->length; j += PAGE_SIZE)
+      vmm_unmap_page(pagemap,
+                     (uintptr_t)(pagemap->ranges.data[i]->virt_addr + j));
+    if (pagemap->ranges.data[i]->flags & MAP_ANON)
+      pmm_free_pages((void *)pagemap->ranges.data[i]->phys_addr,
+                     pagemap->ranges.data[i]->length / PAGE_SIZE);
+  }
+
+  kfree(pagemap->ranges.data);
+  pmm_free_pages((void *)pagemap->top_level, 1);
+  kfree(pagemap);
 }
 
 int init_vmm() {

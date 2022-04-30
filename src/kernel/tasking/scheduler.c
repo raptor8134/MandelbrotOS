@@ -1,5 +1,6 @@
 #include <boot/stivale2.h>
 #include <cpu_locals.h>
+#include <dev/device.h>
 #include <drivers/apic.h>
 #include <drivers/pcspkr.h>
 #include <drivers/pit.h>
@@ -20,7 +21,6 @@
 #include <tasking/scheduler.h>
 #include <vec.h>
 
-#define STACK_SIZE 0x20000
 #define VIRTUAL_STACK_ADDR 0x70000000000
 
 extern void switch_and_run_stack(uintptr_t stack);
@@ -58,15 +58,19 @@ void sched_enqueue_proc(proc_t *proc) {
 }
 
 proc_t *sched_new_proc(uintptr_t addr, uint8_t priority, int user,
-                       int auto_enqueue, proc_t *parent_proc, uint64_t arg1,
-                       uint64_t arg2, uint64_t arg3) {
+                       int auto_enqueue, proc_t *parent_proc, int uid, int gid,
+                       uint64_t arg1, uint64_t arg2, uint64_t arg3) {
   proc_t *new_proc = kmalloc(sizeof(proc_t));
 
   *new_proc = (proc_t){
+    .alive = 1,
+    .exit_code = 0,
     .pid = current_pid++,
     .parent_proc = parent_proc,
     .enqueued = 0,
     .blocked = 0,
+    .uid = uid,
+    .gid = gid,
     .regs =
       (registers_t){
         .cs = (user) ? GDT_SEG_UCODE : GDT_SEG_KCODE,
@@ -79,10 +83,9 @@ proc_t *sched_new_proc(uintptr_t addr, uint8_t priority, int user,
         .rdx = arg3,
       },
     .pagemap = (user) ? vmm_create_new_pagemap() : &kernel_pagemap,
-    .mmap_anon = MMAP_ANON_START_ADDR,
+    .mmap_anon = MMAP_START_ADDR,
     .user = user,
     .priority = priority,
-    .last_fd = 0,
     .fpu_storage = {0},
   };
 
@@ -90,7 +93,7 @@ proc_t *sched_new_proc(uintptr_t addr, uint8_t priority, int user,
     vec_push(&new_proc->parent_proc->children, new_proc);
 
   new_proc->children.data = kmalloc(sizeof(proc_t *));
-  new_proc->fds.data = kmalloc(sizeof(syscall_file_t *));
+  new_proc->fds = kcalloc(sizeof(syscall_file_t *) * FDS_COUNT);
 
   asm volatile("fxsave %0" : "+m"(new_proc->fpu_storage) : : "memory");
 
@@ -133,6 +136,8 @@ size_t sched_fork(registers_t *regs) {
   proc_t *new_proc = kmalloc(sizeof(proc_t));
 
   *new_proc = (proc_t){
+    .alive = 1,
+    .exit_code = 0,
     .user = orig_proc->user,
     .blocked = 0,
     .regs = *regs,
@@ -141,19 +146,20 @@ size_t sched_fork(registers_t *regs) {
     .parent_proc = orig_proc,
     .pagemap = vmm_fork_pagemap(orig_proc->pagemap),
     .enqueued = 0,
-    .last_fd = orig_proc->last_fd,
     .mmap_anon = orig_proc->mmap_anon,
     .kernel_stack =
       (uintptr_t)pcalloc(STACK_SIZE / PAGE_SIZE) + STACK_SIZE + PHYS_MEM_OFFSET,
   };
 
-  new_proc->fds.data = kmalloc(sizeof(syscall_file_t *));
+  new_proc->fds = kcalloc(sizeof(syscall_file_t *) * FDS_COUNT);
   new_proc->children.data = kmalloc(sizeof(proc_t *));
 
-  for (size_t i = 0; i < (size_t)orig_proc->fds.length; i++) {
+  for (size_t i = 0; i < (size_t)FDS_COUNT; i++) {
     syscall_file_t *sfile = kmalloc(sizeof(syscall_file_t));
-    *sfile = *orig_proc->fds.data[i];
-    vec_push(&new_proc->fds, sfile);
+    if (orig_proc->fds[i]) {
+      *sfile = *orig_proc->fds[i];
+      new_proc->fds[i] = sfile;
+    }
   }
 
   new_proc->regs.rax = 0;
@@ -172,31 +178,75 @@ size_t sched_fork(registers_t *regs) {
 void sched_destroy(proc_t *proc) {
   LOCK(sched_lock);
 
-  vec_remove(&procs[proc->priority], proc);
-  vec_remove(&proc->parent_proc->children, proc);
-
-  for (size_t i = 0; i < (size_t)proc->fds.length; i++)
-    vfs_close(proc->fds.data[i]->file);
-  for (size_t i = 0; i < (size_t)proc->children.length; i++)
-    sched_destroy(proc->children.data[i]);
-
-  pmm_free_pages((void *)proc->kernel_stack, STACK_SIZE / PAGE_SIZE);
+  if (proc->enqueued)
+    vec_remove(&procs[proc->priority], proc);
+  if (proc->parent_proc)
+    vec_remove(&proc->parent_proc->children, proc);
   if (proc->user)
-    pmm_free_pages((void *)proc->regs.rsp, STACK_SIZE / PAGE_SIZE);
+    vmm_destroy_pagemap(proc->pagemap);
 
+  for (size_t i = 0; i < FDS_COUNT; i++) {
+    if (proc->fds[i]) {
+      vfs_close(proc->fds[i]->file);
+      kfree(proc->fds[i]);
+    }
+  }
+  for (size_t i = 0; i < (size_t)proc->children.length; i++) {
+    UNLOCK(sched_lock);
+    sched_destroy(proc->children.data[i]);
+    LOCK(sched_lock);
+  }
+
+  pmm_free_pages((void *)proc->kernel_stack - STACK_SIZE - PHYS_MEM_OFFSET,
+                 STACK_SIZE / PAGE_SIZE);
+
+  kfree(proc->fds);
   kfree(proc);
 
   UNLOCK(sched_lock);
 }
 
-void sched_current_kill_proc() {
+void sched_current_kill_proc(int code) {
   proc_t *current_proc = get_locals()->current_proc;
   get_locals()->current_proc = NULL;
-  sched_destroy(current_proc);
-  sched_await();
+
+  if (!current_proc->parent_proc) {
+    sched_destroy(current_proc);
+    sched_await();
+  } else {
+    LOCK(sched_lock);
+
+    vec_remove(&procs[current_proc->priority], current_proc);
+    current_proc->exit_code = code;
+    current_proc->alive = 0;
+
+    UNLOCK(sched_lock);
+
+    sched_await();
+  }
 }
 
-size_t sched_get_next_proc(size_t orig_i, uint8_t priority) {
+int sched_waitpid(ssize_t pid, int *status, int options) {
+  proc_t *proc = NULL;
+
+  if (pid > 0) {
+    for (size_t i = 0; i < SCHED_PRIORITY_LEVELS; i++)
+      for (size_t j = 0; j < (size_t)procs[i].length; j++)
+        if (procs[i].data[j]->pid == (size_t)pid)
+          proc = procs[i].data[j];
+    if (!proc)
+      return -1;
+    asm volatile("sti");
+    while (LOCKED_READ(proc->alive))
+      ;
+    asm volatile("cli");
+    sched_destroy(proc);
+    return proc->exit_code;
+  }
+  return -1;
+}
+
+static inline size_t sched_get_next_proc(size_t orig_i, uint8_t priority) {
   size_t index = orig_i + 1;
 
   while (1) {
@@ -205,7 +255,8 @@ size_t sched_get_next_proc(size_t orig_i, uint8_t priority) {
 
     proc_t *proc = LOCKED_READ(procs[priority].data[index]);
 
-    if (LOCK_ACQUIRE(proc->lock) || proc == get_locals()->current_proc)
+    if ((LOCK_ACQUIRE(proc->lock) || proc == get_locals()->current_proc) &&
+        (!proc->blocked && proc->alive))
       return index;
 
     if (index == orig_i)
@@ -289,7 +340,7 @@ void scheduler_init(uintptr_t addr) {
   for (size_t i = 0; i < SCHED_PRIORITY_LEVELS; i++)
     procs[i].data = kmalloc(sizeof(proc_t *));
 
-  sched_new_proc(addr, 0, 0, 1, NULL, 0, 0, 0);
+  sched_new_proc(addr, 0, 0, 1, NULL, 0, 0, 0, 0, 0);
 
   LOCKED_WRITE(sched_started, 1);
   sched_await();

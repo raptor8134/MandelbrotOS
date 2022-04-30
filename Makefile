@@ -32,10 +32,12 @@ $(HDD): $(KERNEL)
 	@ MTOOLSRC=resources/mtoolsrc mformat -c 8 -F c:
 	@ MTOOLSRC=resources/mtoolsrc mmd c:/boot
 	@ MTOOLSRC=resources/mtoolsrc mmd c:/prog
+	@ MTOOLSRC=resources/mtoolsrc mmd c:/data
 	@ MTOOLSRC=resources/mtoolsrc mcopy resources/limine.cfg c:/boot
 	@ MTOOLSRC=resources/mtoolsrc mcopy resources/limine.sys c:/boot
 	@ MTOOLSRC=resources/mtoolsrc mcopy $< c:/boot/kernel
 	@ MTOOLSRC=resources/mtoolsrc mcopy build/prog/* c:/prog
+	@ MTOOLSRC=resources/mtoolsrc mcopy resources/glenda.tga c:/data
 	@ ./resources/limine-install $@
 
 toolchain:	

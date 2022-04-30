@@ -4,6 +4,7 @@
 #include <fs/vfs.h>
 #include <mm/kheap.h>
 #include <mm/vmm.h>
+#include <pipe/pipe.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -162,7 +163,6 @@ fs_file_t *tmpfs_open(fs_t *fs, char *name) {
   fs_file_t *q_file = kmalloc(sizeof(fs_file_t));
   if ((tmpfs_find(fs, name, &q_file, NULL)))
     return NULL;
-
   return q_file;
 }
 
@@ -202,6 +202,54 @@ fs_file_t *tmpfs_create(fs_t *fs, char *path, int mode, int uid, int gid) {
     .last_status_change_time = tim,
     .creation_time = tim,
   };
+
+  path++;
+
+  char *short_name = kmalloc(strlen(path));
+
+  for (size_t i = 0;; i++, path++) {
+    if (*path == '/' || !*path) {
+      short_name[i] = 0;
+      break;
+    }
+    short_name[i] = *path;
+  }
+
+  file->path = strdup(short_name);
+
+  kfree(short_name);
+
+  vec_push(&((tmpfs_dirent_t *)parent_dir->private_data)->children, file);
+
+  return file;
+}
+
+fs_file_t *tmpfs_mkfifo(fs_t *fs, char *path, int mode, int uid, int gid) {
+  posix_time_t tim = rtc_mktime(rtc_get_datetime());
+
+  fs_file_t *parent_dir = kmalloc(sizeof(fs_file_t));
+
+  if (!tmpfs_find(fs, path, NULL, &parent_dir))
+    return tmpfs_open(fs, path);
+
+  fs_file_t *file = kmalloc(sizeof(fs_file_t));
+  *file = (fs_file_t){
+    .uid = uid,
+    .gid = gid,
+    .file_ops = &tmpfs_file_ops,
+    .fs = fs,
+    .length = 0,
+    .inode = (uint64_t)file,
+    .private_data = NULL,
+    .mode = S_IFIFO | mode,
+    .last_access_time = tim,
+    .last_modification_time = tim,
+    .last_status_change_time = tim,
+    .creation_time = tim,
+    .pipe = kmalloc(sizeof(pipe_t)),
+  };
+
+  pipe_init(file->pipe, DEFAULT_PIPE_SIZE);
 
   path++;
 
@@ -339,8 +387,7 @@ fs_t *tmpfs_mount(device_t *dev) {
     .length = 0,
     .inode = (uint64_t)file,
     .private_data = kmalloc(sizeof(tmpfs_dirent_t)),
-    .mode =
-      S_IFDIR | S_IREAD | S_IRGRP | S_IRUSR | S_IWRITE | S_IWGRP | S_IWUSR,
+    .mode = S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO,
     .last_access_time = tim,
     .last_modification_time = tim,
     .last_status_change_time = tim,
@@ -370,6 +417,7 @@ fs_ops_t tmpfs_fs_ops = (fs_ops_t){
   .mount = tmpfs_mount,
   .open = tmpfs_open,
   .mknod = tmpfs_mknod,
+  .mkfifo = tmpfs_mkfifo,
 };
 
 int init_tmpfs() {

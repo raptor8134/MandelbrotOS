@@ -11,21 +11,23 @@
 #include <sys/syscall.h>
 #include <tasking/scheduler.h>
 
-#define ALIGN_UP(__addr, __align) (((__addr) + (__align)-1) & ~((__align)-1))
-
 #define ELF_RELOCATEABLE 1
 #define ELF_EXECUTABLE 2
 
 #define ELF_HEAD_LOAD 1
 
-#define ELF_SECT_NOBITS 8
+#define PF_X 1
+#define PF_W 2
+#define PF_R 4
+
+#define ROUND_UP(A, B)                                                         \
+  ({                                                                           \
+    typeof(A) _a_ = A;                                                         \
+    typeof(B) _b_ = B;                                                         \
+    (_a_ + (_b_ - 1)) / _b_;                                                   \
+  })
 
 char elf_ident[4] = {0x7f, 'E', 'L', 'F'};
-
-// TYSM OSDEV wiki
-static inline elf_sect_header_t *elf_sheader(elf_header_t *hdr) {
-  return (elf_sect_header_t *)((uintptr_t)(uint64_t)hdr + hdr->sect_head_off);
-}
 
 uint8_t elf_run_binary(char *path, proc_t *proc, int auto_enqueue) {
   fs_file_t *file = vfs_open(path);
@@ -38,66 +40,47 @@ uint8_t elf_run_binary(char *path, proc_t *proc, int auto_enqueue) {
   if (memcmp((void *)header->identifier, elf_ident, 4))
     return 1;
 
-  elf_sect_header_t *sect_headers = elf_sheader(header);
+  elf_header_t *elf_header = (elf_header_t *)buffer;
+  elf_prog_header_t *prog_header = (void *)(buffer + elf_header->prog_head_off);
 
-  for (size_t i = 0; i < header->sect_head_count; i++) {
-    elf_sect_header_t *sect_header = &sect_headers[i];
-    if (!sect_header->size)
-      continue;
-    else if (sect_header->type == ELF_SECT_NOBITS) {
-      uintptr_t mem =
-        (uintptr_t)pmalloc(ALIGN_UP(sect_header->size, PAGE_SIZE) / PAGE_SIZE);
-      for (size_t j = 0; j < ALIGN_UP(sect_header->size, PAGE_SIZE) / PAGE_SIZE;
-           j += PAGE_SIZE)
-        vmm_map_page(proc->pagemap, mem + j, sect_header->addr + j, 0b111);
-
-      mmap_range_t *mmap_range = kmalloc(sizeof(mmap_range_t));
-      *mmap_range = (mmap_range_t){
-        .file = NULL,
-        .flags = MAP_FIXED | MAP_ANON,
-        .length = ALIGN_UP(sect_header->size, PAGE_SIZE),
-        .offset = 0,
-        .prot = PROT_READ | PROT_WRITE | PROT_EXEC,
-        .phys_addr = mem,
-        .virt_addr = sect_header->addr,
-      };
-
-      vec_push(&proc->pagemap->ranges, mmap_range);
-    }
-  }
-
-  elf_prog_header_t *prog_header = (void *)(buffer + header->prog_head_off);
-
-  for (size_t i = 0; i < header->prog_head_count; i++) {
-    if (prog_header->type == ELF_HEAD_LOAD) {
-      uintptr_t mem = (uintptr_t)pmalloc(
-        ALIGN_UP(prog_header->mem_size, PAGE_SIZE) / PAGE_SIZE);
+  for (size_t i = 0; i < elf_header->prog_head_count; i++) {
+    if (prog_header[i].type == ELF_HEAD_LOAD) {
+      void *addr = pcalloc(ROUND_UP(
+        (prog_header[i].virt_addr & (PAGE_SIZE - 1)) + prog_header[i].mem_size,
+        PAGE_SIZE));
 
       for (size_t j = 0;
-           j < ALIGN_UP(prog_header->mem_size, PAGE_SIZE) / PAGE_SIZE;
+           j < ROUND_UP((prog_header[i].virt_addr & (PAGE_SIZE - 1)) +
+                          prog_header[i].mem_size,
+                        PAGE_SIZE) *
+                 PAGE_SIZE;
            j += PAGE_SIZE)
-        vmm_map_page(proc->pagemap, mem + j, prog_header->virt_addr + j, 0b111);
+        vmm_map_page(proc->pagemap, (uintptr_t)addr + j,
+                     prog_header->virt_addr + j,
+                     (prog_header[i].flags & PF_W) ? 0b111 : 0b101);
 
       mmap_range_t *mmap_range = kmalloc(sizeof(mmap_range_t));
       *mmap_range = (mmap_range_t){
         .file = NULL,
         .flags = MAP_FIXED | MAP_ANON,
-        .length = ALIGN_UP(prog_header->mem_size, PAGE_SIZE),
+        .length = ROUND_UP((prog_header[i].virt_addr & (PAGE_SIZE - 1)) +
+                             prog_header[i].mem_size,
+                           PAGE_SIZE) *
+                  PAGE_SIZE,
         .offset = 0,
-        .prot = PROT_READ | PROT_WRITE | PROT_EXEC,
-        .phys_addr = mem,
-        .virt_addr = prog_header->virt_addr,
+        .prot = PROT_READ | PROT_EXEC | (prog_header[i].flags & PF_W)
+                  ? PROT_WRITE
+                  : 0,
+        .phys_addr = (uintptr_t)addr,
+        .virt_addr = prog_header[i].virt_addr,
       };
 
       vec_push(&proc->pagemap->ranges, mmap_range);
 
-      memset((void *)mem, 0, prog_header->mem_size);
-      memcpy((void *)mem, (void *)((uint64_t)buffer + prog_header->offset),
-             prog_header->file_size);
+      memcpy(((char *)((uintptr_t)addr + PHYS_MEM_OFFSET)) +
+               (prog_header[i].virt_addr & (PAGE_SIZE - 1)),
+             buffer + prog_header[i].offset, prog_header[i].file_size);
     }
-
-    prog_header =
-      (elf_prog_header_t *)((uint16_t *)prog_header + header->prog_head_size);
   }
 
   proc->regs.rip = header->entry;

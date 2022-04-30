@@ -21,6 +21,10 @@
 #define SYSCALL_IOCTL 14
 #define SYSCALL_GETPPID 15
 #define SYSCALL_SEEK 16
+#define SYSCALL_WAITPID 17
+#define SYSCALL_ACCESS 18
+#define SYSCALL_PIPE 19
+#define SYSCALL_FCNTL 20
 
 #define PROT_READ 0x1
 #define PROT_WRITE 0x2
@@ -32,7 +36,7 @@
 #define MAP_FIXED 0x4
 #define MAP_ANON 0x8
 
-#define MMAP_START_ADDR 0x800000
+#define MMAP_START_ADDR 0x80000000000
 
 typedef struct mmap_args {
   void *addr;
@@ -45,8 +49,7 @@ typedef struct mmap_args {
 
 typedef struct syscall_file {
   fs_file_t *file;
-  size_t fd;
-  size_t offset;
+  int flags;
 } syscall_file_t;
 
 int init_syscalls();

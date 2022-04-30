@@ -76,15 +76,17 @@ void k_thread() {
   syscall_file_t *fil = kmalloc(sizeof(syscall_file_t));
   *fil = (syscall_file_t){
     .file = tty0,
-    .fd = 1,
-    .offset = 0,
+    .flags = O_RDWR,
   };
 
-  proc_t *user_proc = sched_new_proc(0, 0, 1, 0, NULL, 0, 0, 0);
-  vec_push(&user_proc->fds, fil);
-  user_proc->last_fd = 2;
+  tty0->offset = 0;
 
-  elf_run_binary("/prog/mandelbrot", user_proc, 1);
+  proc_t *user_proc = sched_new_proc(0, 0, 1, 0, NULL, 0, 0, 0, 0, 0);
+  user_proc->fds[0] = fil;
+  user_proc->fds[1] = fil;
+  user_proc->fds[2] = fil;
+
+  elf_run_binary("/prog/img", user_proc, 1);
 
   while (1)
     ;
@@ -109,7 +111,7 @@ void kernel_main(struct stivale2_struct *bootloader_info) {
   init_gdt();
 
   init_pmm(memory_info);
-  init_vmm();
+  init_vmm(memory_info);
 
   init_idt();
   init_syscalls();

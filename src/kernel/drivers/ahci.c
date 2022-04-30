@@ -135,13 +135,15 @@ ssize_t sata_read(device_t *dev, size_t start, size_t count, uint8_t *buf) {
   if (slot == -1)
     return 0;
 
-  hba_cmd_header_t *cmd_header = (hba_cmd_header_t *)(uintptr_t)(port->clb);
+  hba_cmd_header_t *cmd_header =
+    (hba_cmd_header_t *)((uintptr_t)(port->clb + PHYS_MEM_OFFSET));
   cmd_header += slot;
   cmd_header->cfl = sizeof(fis_reg_host_to_device_t) / sizeof(uint32_t);
   cmd_header->w = 0;
   cmd_header->prdtl = (uint16_t)((count32 - 1) >> 4) + 1;
 
-  hba_cmd_tbl_t *cmd_table = (hba_cmd_tbl_t *)(uintptr_t)cmd_header->ctba;
+  hba_cmd_tbl_t *cmd_table =
+    (hba_cmd_tbl_t *)((uintptr_t)cmd_header->ctba + PHYS_MEM_OFFSET);
   memset(cmd_table, 0,
          sizeof(hba_cmd_tbl_t) +
            (cmd_header->prdtl - 1) * sizeof(hba_prdt_entry_t));
@@ -221,7 +223,8 @@ ssize_t sata_write(device_t *dev, size_t start, size_t count, uint8_t *buf) {
   if (slot == -1)
     return 0;
 
-  hba_cmd_header_t *cmd_header = (hba_cmd_header_t *)(uintptr_t)(port->clb);
+  hba_cmd_header_t *cmd_header =
+    (hba_cmd_header_t *)((uintptr_t)(port->clb + PHYS_MEM_OFFSET));
   cmd_header += slot;
   cmd_header->cfl = sizeof(fis_reg_host_to_device_t) / sizeof(uint32_t);
   cmd_header->w = 1;
@@ -229,7 +232,8 @@ ssize_t sata_write(device_t *dev, size_t start, size_t count, uint8_t *buf) {
   cmd_header->p = 1;
   cmd_header->prdtl = (uint16_t)((count32 - 1) >> 4) + 1;
 
-  hba_cmd_tbl_t *cmd_table = (hba_cmd_tbl_t *)(uintptr_t)cmd_header->ctba;
+  hba_cmd_tbl_t *cmd_table =
+    (hba_cmd_tbl_t *)((uintptr_t)cmd_header->ctba + PHYS_MEM_OFFSET);
   memset(cmd_table, 0,
          sizeof(hba_cmd_tbl_t) +
            (cmd_header->prdtl - 1) * sizeof(hba_prdt_entry_t));
@@ -357,7 +361,8 @@ int init_sata() {
   for (size_t i = 0; i < (size_t)pci_devices.length; i++)
     if (pci_devices.data[i]->header.class == 1 &&
         pci_devices.data[i]->header.subclass == 6)
-      vec_push(&abars, pci_get_bar(pci_devices.data[i], 5).base);
+      vec_push(&abars,
+               pci_get_bar(pci_devices.data[i], 5).base + PHYS_MEM_OFFSET);
 
   if (!abars.length)
     return 1;

@@ -18,7 +18,7 @@ void *mousedev_mmap(device_t *dev, pagemap_t *pg, syscall_file_t *sfile,
   (void)offset;
   (void)prot;
   (void)flags;
-  return NULL;
+  return (void *)-1;
 }
 
 ssize_t mousedev_write(device_t *dev, size_t start, size_t count,

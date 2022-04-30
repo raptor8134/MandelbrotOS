@@ -7,7 +7,6 @@
 #include <vec.h>
 
 #define KERNEL_MEM_OFFSET 0xffffffff80000000
-#define MMAP_ANON_START_ADDR 0x80000000000
 
 typedef struct syscall_file syscall_file_t; // Recursive inclusion
 struct pagemap;
@@ -41,6 +40,7 @@ void vmm_memcpy(pagemap_t *pagemap_1, uintptr_t virtual_address_1,
                 size_t count);
 uintptr_t vmm_virt_to_phys(pagemap_t *pagemap, uintptr_t virtual_address);
 uintptr_t vmm_get_kernel_address(pagemap_t *pagemap, uintptr_t virtual_address);
+void vmm_destroy_pagemap(pagemap_t *pagemap);
 int init_vmm();
 
 #endif
