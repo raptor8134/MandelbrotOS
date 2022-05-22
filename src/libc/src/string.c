@@ -10,12 +10,10 @@ char *strchr(char *str, int c) {
 }
 
 size_t strlen(char *s) {
-  size_t count = 0;
-  while (*s != '\0') {
-    count++;
-    s++;
-  }
-  return count;
+  int i;
+  for (i = 0; s[i] != '\0'; ++i)
+    ;
+  return i;
 }
 
 void memcpy(void *dest, void *src, size_t n) {
