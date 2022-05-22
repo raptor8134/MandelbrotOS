@@ -10,7 +10,7 @@ char *strchr(char *str, int c) {
 }
 
 size_t strlen(char *s) {
-  int i;
+  size_t i;
   for (i = 0; s[i] != '\0'; ++i)
     ;
   return i;
