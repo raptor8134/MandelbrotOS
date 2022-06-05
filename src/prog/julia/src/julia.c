@@ -1,5 +1,7 @@
+#include <fcntl.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/ioctl.h>
 #include <sys/mandelbrot.h>
 #include <sys/mman.h>
 
@@ -169,26 +171,14 @@ void draw(double real, double imag) {
 }
 
 void main() {
-  size_t fd = intsyscall(SYSCALL_OPEN, (uint64_t) "/dev/fb0", 0, 0, 0, 0);
+  size_t fd = open("/dev/fb0", O_RDWR);
 
-  width =
-    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_WIDTH, (uint64_t)NULL, 0, 0);
-  height =
-    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT, (uint64_t)NULL, 0, 0);
-  size_t bpp =
-    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT, (uint64_t)NULL, 0, 0);
+  width = ioctl(fd, IOCTL_FBDEV_GET_WIDTH, 0);
+  height = ioctl(fd, IOCTL_FBDEV_GET_HEIGHT, 0);
+  size_t bpp = ioctl(fd, IOCTL_FBDEV_GET_BPP, 0);
 
-  mmap_args_t args = (mmap_args_t){
-    .addr = NULL,
-    .fd = fd,
-    .length = width * height * (bpp / 8),
-    .offset = 0,
-    .prot = PROT_READ | PROT_WRITE,
-    .flags = 0,
-  };
-
-  framebuffer =
-    (uint32_t *)intsyscall(SYSCALL_MMAP, (uint64_t)&args, 0, 0, 0, 0);
+  framebuffer = (uint32_t *)mmap(NULL, width * height * (bpp / 8),
+                                 PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
 
   // 4 really cool alorithms to choose from
 

@@ -3,6 +3,7 @@
 #include <mm/vmm.h>
 #include <printf.h>
 #include <registers.h>
+#include <signal.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/idt.h>
@@ -117,20 +118,55 @@ int init_isr() {
 void c_isr_handler(uint64_t ex_no, uint64_t rsp) {
   vmm_load_pagemap(&kernel_pagemap);
 
-  printf("\r\nCPU %lu: %s at %lx\r\n", get_locals()->cpu_number,
+  printf("\nCPU %lu: %s at %lx\n", get_locals()->cpu_number,
          exception_messages[ex_no], ((registers_t *)rsp)->rip);
 
-  printf("Stack trace:\r\n%lx\r\n", ((registers_t *)rsp)->rip);
+  while (1)
+    ;
+
+  printf("Stack trace:\n%lx\n", ((registers_t *)rsp)->rip);
   uint64_t rbp = ((registers_t *)rsp)->rbp;
   while (rbp) {
     uint64_t rip = ((uint64_t *)(vmm_get_kernel_address(
-      get_locals()->current_proc->pagemap, rbp)))[1];
-    printf("%lx\r\n", rip);
+      get_locals()->current_thread->parent->pagemap, rbp)))[1];
+    printf("%lx\n", rip);
     rbp = *((uint64_t *)(vmm_get_kernel_address(
-      get_locals()->current_proc->pagemap, rbp)));
+      get_locals()->current_thread->parent->pagemap, rbp)));
   }
 
+  /* if (ex_no == 13 || ex_no == 14) { */
+  /* vec_push(&get_locals()->current_proc->signals_received, SIGSEGV); */
+  /* if (get_locals()->current_proc->signal_handlers[SIGSEGV - 1] == SIG_IGN) */
+  /* sched_await(); */
+  /* else if (get_locals()->current_proc->signal_handlers[SIGSEGV - 1]) { */
+  /* vmm_load_pagemap(get_locals()->current_proc->pagemap); */
+  /* get_locals()->current_proc->signal_handlers[SIGSEGV - 1](SIGSEGV); */
+  /* } else */
+  /* sched_current_kill_proc(SIGSEGV + 127); */
+  /* sched_await(); */
+  /* } else if (ex_no == 6) { */
+  /* vec_push(&get_locals()->current_proc->signals_received, SIGILL); */
+  /* if (get_locals()->current_proc->signal_handlers[SIGILL - 1] == SIG_IGN) */
+  /* sched_await(); */
+  /* else if (get_locals()->current_proc->signal_handlers[SIGILL - 1]) { */
+  /* vmm_load_pagemap(get_locals()->current_proc->pagemap); */
+  /* get_locals()->current_proc->signal_handlers[SIGILL - 1](SIGILL); */
+  /* } else */
+  /* sched_current_kill_proc(SIGILL + 127); */
+  /* sched_await(); */
+  /* } else if (ex_no == 16 || ex_no == 19) { */
+  /* vec_push(&get_locals()->current_proc->signals_received, SIGFPE); */
+  /* if (get_locals()->current_proc->signal_handlers[SIGFPE - 1] == SIG_IGN) */
+  /* sched_await(); */
+  /* else if (get_locals()->current_proc->signal_handlers[SIGFPE - 1]) { */
+  /* vmm_load_pagemap(get_locals()->current_proc->pagemap); */
+  /* get_locals()->current_proc->signal_handlers[SIGFPE - 1](SIGFPE); */
+  /* } else */
+  /* sched_current_kill_proc(SIGFPE + 127); */
+  /* sched_await(); */
+  /* } */
+
   while (1)
-    asm volatile("cli\n"
-                 "hlt\n");
+    asm volatile("hlt\n"
+                 "cli");
 }

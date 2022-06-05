@@ -18,17 +18,15 @@ pagemap_t kernel_pagemap;
 
 static uint64_t *vmm_get_next_level(uint64_t *table, size_t index,
                                     uint64_t flags) {
-  uint64_t *ret = 0;
-  uint64_t *entry = (void *)((uint64_t)table + PHYS_MEM_OFFSET) + index * 8;
+  void *ret = NULL;
 
-  if ((entry[0] & 1) != 0)
-    ret = (uint64_t *)(entry[0] & (uint64_t)~0xfff);
+  if (table[index] & 1)
+    ret = (void *)(table[index] & ~((uintptr_t)0xfff));
   else {
-    ret = pmalloc(1);
-    entry[0] = (uint64_t)ret | flags;
+    ret = pcalloc(1);
+    table[index] = (uint64_t)ret | 0b111;
   }
-
-  return ret;
+  return ret + PHYS_MEM_OFFSET;
 }
 
 void vmm_invalidate_tlb(pagemap_t *pagemap, uintptr_t virtual_address) {
@@ -47,12 +45,12 @@ void vmm_map_page(pagemap_t *pagemap, uintptr_t physical_address,
   size_t pml_entry2 = (size_t)(virtual_address & ((size_t)0x1ff << 21)) >> 21;
   size_t pml_entry1 = (size_t)(virtual_address & ((size_t)0x1ff << 12)) >> 12;
 
-  uint64_t *pml3 = vmm_get_next_level(pagemap->top_level, pml_entry4, flags);
+  uint64_t *pml3 = vmm_get_next_level(
+    (void *)pagemap->top_level + PHYS_MEM_OFFSET, pml_entry4, flags);
   uint64_t *pml2 = vmm_get_next_level(pml3, pml_entry3, flags);
   uint64_t *pml1 = vmm_get_next_level(pml2, pml_entry2, flags);
 
-  *(uint64_t *)((uint64_t)pml1 + PHYS_MEM_OFFSET + pml_entry1 * 8) =
-    physical_address | flags;
+  *(uint64_t *)((uint64_t)pml1 + pml_entry1 * 8) = physical_address | flags;
 
   vmm_invalidate_tlb(pagemap, virtual_address);
 
@@ -67,11 +65,12 @@ void vmm_unmap_page(pagemap_t *pagemap, uintptr_t virtual_address) {
   size_t pml_entry2 = (size_t)(virtual_address & ((size_t)0x1ff << 21)) >> 21;
   size_t pml_entry1 = (size_t)(virtual_address & ((size_t)0x1ff << 12)) >> 12;
 
-  uint64_t *pml3 = vmm_get_next_level(pagemap->top_level, pml_entry4, 0b111);
+  uint64_t *pml3 = vmm_get_next_level(
+    (void *)pagemap->top_level + PHYS_MEM_OFFSET, pml_entry4, 0b111);
   uint64_t *pml2 = vmm_get_next_level(pml3, pml_entry3, 0b111);
   uint64_t *pml1 = vmm_get_next_level(pml2, pml_entry2, 0b111);
 
-  *(uint64_t *)((uint64_t)pml1 + PHYS_MEM_OFFSET + pml_entry1 * 8) = 0;
+  *(uint64_t *)((uint64_t)pml1 + pml_entry1 * 8) = 0;
 
   vmm_invalidate_tlb(pagemap, virtual_address);
 
@@ -84,7 +83,8 @@ uintptr_t vmm_virt_to_phys(pagemap_t *pagemap, uintptr_t virtual_address) {
   size_t pml_entry2 = (size_t)(virtual_address & ((size_t)0x1ff << 21)) >> 21;
   size_t pml_entry1 = (size_t)(virtual_address & ((size_t)0x1ff << 12)) >> 12;
 
-  uint64_t *pml3 = vmm_get_next_level(pagemap->top_level, pml_entry4, 0b111);
+  uint64_t *pml3 = vmm_get_next_level(
+    (void *)pagemap->top_level + PHYS_MEM_OFFSET, pml_entry4, 0b111);
   uint64_t *pml2 = vmm_get_next_level(pml3, pml_entry3, 0b111);
   uint64_t *pml1 = vmm_get_next_level(pml2, pml_entry2, 0b111);
 
@@ -152,13 +152,15 @@ pagemap_t *vmm_create_new_pagemap() {
   pagemap_t *new_map = kcalloc(sizeof(pagemap_t));
   new_map->top_level = pcalloc(1);
 
-  uint64_t *kernel_top = (uint64_t *)((void *)kernel_pagemap.top_level);
-  uint64_t *user_top = (uint64_t *)((void *)new_map->top_level);
+  uint64_t *kernel_top =
+    (uint64_t *)((void *)kernel_pagemap.top_level + PHYS_MEM_OFFSET);
+  uint64_t *user_top =
+    (uint64_t *)((void *)new_map->top_level + PHYS_MEM_OFFSET);
 
   for (uintptr_t i = 256; i < 512; i++)
     user_top[i] = kernel_top[i];
 
-  new_map->ranges.data = kmalloc(sizeof(mmap_range_t));
+  new_map->ranges.data = kcalloc(sizeof(mmap_range_t *));
 
   return new_map;
 }
@@ -213,6 +215,33 @@ void vmm_destroy_pagemap(pagemap_t *pagemap) {
   kfree(pagemap->ranges.data);
   pmm_free_pages((void *)pagemap->top_level, 1);
   kfree(pagemap);
+}
+
+void vmm_mmap_range(pagemap_t *pagemap, uintptr_t phys_addr,
+                    uintptr_t virt_addr, size_t length, int flags, int prot) {
+  for (size_t i = 0; i < length; i += PAGE_SIZE)
+    vmm_map_page(pagemap, phys_addr + i, virt_addr + i,
+                 (prot & PROT_WRITE) ? 0b111 : 0b101);
+
+  mmap_range_t *mmap_range = kmalloc(sizeof(mmap_range_t));
+  *mmap_range = (mmap_range_t){
+    .file = NULL,
+    .flags = flags | MAP_ANON,
+    .length = length,
+    .offset = 0,
+    .prot = prot,
+    .phys_addr = phys_addr,
+    .virt_addr = virt_addr,
+  };
+
+  vec_push(&pagemap->ranges, mmap_range);
+}
+
+uintptr_t vmm_range_to_addr(pagemap_t *pagemap, uintptr_t virt_addr) {
+  for (size_t i = 0; i < (size_t)pagemap->ranges.length; i++)
+    if (pagemap->ranges.data[i]->virt_addr == virt_addr)
+      return pagemap->ranges.data[i]->phys_addr;
+  return 0;
 }
 
 int init_vmm() {

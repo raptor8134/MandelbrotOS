@@ -18,7 +18,7 @@ void pci_enumerate_fn(uint64_t device_address, uint64_t bus, uint8_t device,
   if (!pci_fn->device_id || pci_fn->device_id == 0xFFFF)
     return;
 
-  klog(3, "%x:%x.%x -> %s, %s, %s, %s\r\n", (uint32_t)bus, device, function,
+  klog(3, "%x:%x.%x -> %s, %s, %s, %s\n", (uint32_t)bus, device, function,
        pci_get_vendor_name(pci_fn->vendor_id),
        pci_device_classes[pci_fn->class],
        pci_get_subclass_name(pci_fn->class, pci_fn->subclass),

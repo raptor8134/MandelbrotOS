@@ -1,6 +1,7 @@
 #include <fs/vfs.h>
 #include <mm/kheap.h>
 #include <pipe/pipe.h>
+#include <printf.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>

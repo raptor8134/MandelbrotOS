@@ -93,10 +93,10 @@ int vfs_mount(char *path, device_t *dev, char *fs_name) {
     dev->fs = fs;
 
   if (dev)
-    klog(3, "Mounted %s filesystem on device %lu on %s\r\n", fs_name, dev->id,
+    klog(3, "Mounted %s filesystem on device %lu on %s\n", fs_name, dev->id,
          path);
   else
-    klog(3, "Mounted %s filesystem on %s\r\n", fs_name, path);
+    klog(3, "Mounted %s filesystem on %s\n", fs_name, path);
 
   return 0;
 }
@@ -303,8 +303,8 @@ fs_file_t *vfs_open(char *name) {
 }
 
 int init_vfs() {
-  vfs_mounts.data = kmalloc(sizeof(vfs_mount_info_t));
-  registered_fses.data = kmalloc(sizeof(fs_ops_t));
+  vfs_mounts.data = kmalloc(sizeof(vfs_mount_info_t *));
+  registered_fses.data = kmalloc(sizeof(fs_ops_t *));
 
   return 0;
 }

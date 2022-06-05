@@ -107,9 +107,9 @@ int init_acpi(struct stivale2_struct_tag_rsdp *rsdp_info) {
 
   if (rsdp->revision > 0) {
     xsdt = (xsdt_t *)(rsdp->xsdt_address + PHYS_MEM_OFFSET);
-    klog(3, "ACPI is revision 2\r\n");
+    klog(3, "ACPI is revision 2\n");
   } else
-    klog(3, "ACPI is revision 1\r\n");
+    klog(3, "ACPI is revision 1\n");
 
   fadt = acpi_get_table("FACP", 0);
 
