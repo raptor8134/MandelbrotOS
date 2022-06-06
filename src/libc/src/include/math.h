@@ -8,7 +8,7 @@
  * Reference the section '7.12 Mathematics <math.h>' in
  * https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf
  * (C99 standard pdf) for all the required functions
- * 
+ *
  * See other big block comment for more stuff.
  */
 
@@ -54,7 +54,6 @@
 #define MATH_ERREXCEPT 2
 #define math_errhandling 3
 
-
 /**************/
 
 /* CLASSIFICATION MACROS */
@@ -75,12 +74,12 @@
  * but that doesn't really matter just put the most important at the top
  * if you want to. Or maybe it does matter who knows.
  *
- * Complex functions will be in <complex.h>, and integer arithmetic mostly goes in 
- * <stdlib.h> so look there if you don't find something here
+ * Complex functions will be in <complex.h>, and integer arithmetic mostly goes
+ * in <stdlib.h> so look there if you don't find something here
  *
- * One more thing: those of these that are implemented will be in `math.c` for a while,
- * but will move to seperate files based on category in the directory libc/math/ sometime
- * in the future.
+ * One more thing: those of these that are implemented will be in `math.c` for a
+ * while, but will move to seperate files based on category in the directory
+ * libc/math/ sometime in the future.
  */
 
 /* INVERSE TRIG */
