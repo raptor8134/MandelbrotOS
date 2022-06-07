@@ -1,5 +1,3 @@
-// Doesn't do anything yet (except for constants), just a list of functions to
-// implement
 #ifndef __MATH_H__
 #define __MATH_H__
 
@@ -15,41 +13,46 @@
 // TODO Implement `FP_CONTRACT` pragma
 
 /* CONSTANTS copied from glibc <math.h> header because lazy */
-#define M_E 2.7182818284590452354         /* e */
-#define M_LOG2E 1.4426950408889634074     /* log_2 e */
-#define M_LOG10E 0.43429448190325182765   /* log_10 e */
-#define M_LN2 0.69314718055994530942      /* log_e 2 */
-#define M_LN10 2.30258509299404568402     /* log_e 10 */
-#define M_PI 3.14159265358979323846       /* pi */
-#define M_PI_2 1.57079632679489661923     /* pi/2 */
-#define M_PI_4 0.78539816339744830962     /* pi/4 */
-#define M_1_PI 0.31830988618379067154     /* 1/pi */
-#define M_2_PI 0.63661977236758134308     /* 2/pi */
+#define M_E 2.7182818284590452354         /* e          */
+#define M_LOG2E 1.4426950408889634074     /* log_2 e    */
+#define M_LOG10E 0.43429448190325182765   /* log_10 e   */
+#define M_LN2 0.69314718055994530942      /* log_e 2    */
+#define M_LN10 2.30258509299404568402     /* log_e 10   */
+#define M_PI 3.14159265358979323846       /* pi         */
+#define M_PI_2 1.57079632679489661923     /* pi/2       */
+#define M_PI_4 0.78539816339744830962     /* pi/4       */
+#define M_1_PI 0.31830988618379067154     /* 1/pi       */
+#define M_2_PI 0.63661977236758134308     /* 2/pi       */
 #define M_2_SQRTPI 1.12837916709551257390 /* 2/sqrt(pi) */
-#define M_SQRT2 1.41421356237309504880    /* sqrt(2) */
-#define M_SQRT1_2 0.70710678118654752440  /* 1/sqrt(2) */
+#define M_SQRT2 1.41421356237309504880    /* sqrt(2)    */
+#define M_SQRT1_2 0.70710678118654752440  /* 1/sqrt(2)  */
 
 /**************/
 
 /* MACROS */
-// TODO implement infinities, NaNs, HUGE_VAL, etc.
+// TODO make a <limits.h> so this is more sane
 #define float_t float
 #define double_t double
 #define FLT_EVAL_METHOD 0
-//#define HUGE_VAL
-//#define HUGE_VALL
-//#define INFINITY
-//#define NAN
-//#define FP_INFINITE
-//#define FP_NAN
-//#define FP_NORMAL
-//#define FP_SUBNORMAL
-//#define FP_ZERO
-//#define FP_FAST_FMA
+#define HUGE_VAL 0x7FF0000000000000 // 64 bit IEEE 754 infinity
+#define HUGE_VALF INFINITY
+#if SIZEOF_LONG_DOUBLE > SIZEOF_DOUBLE
+#define HUGE_VALL 0x7FFF8000000000000000 // 80 bit IEEE 754 infinity
+#else
+#define HUGE_VALL HUGE_VAL
+#endif
+#define INFINITY 0x7F800000
+#define NAN 0x7FC00000 // can be many others
+#define FP_NAN 0       // gcc defines these five this way so I am too
+#define FP_INFINITE 1
+#define FP_ZERO 2
+#define FP_SUBNORMAL 3
+#define FP_NORMAL 4
+//#define FP_FAST_FMA // not sure if we need these three or not yet
 //#define FP_FAST_FMAF
 //#define FP_FAST_FMAL
-//#define FP_ILOGB0
-//#define FP_ILOGBNAN
+#define FP_ILOGB0 2147483647   // TODO redefine as INT_MAX when have <limits.h>
+#define FP_ILOGBNAN 2147483647 // same as above
 #define MATH_ERRNO 1
 #define MATH_ERREXCEPT 2
 #define math_errhandling 3
@@ -57,12 +60,12 @@
 /**************/
 
 /* CLASSIFICATION MACROS */
-//#define fpclassify(x)
-//#define isfinite(x)
-//#define isinf(x)
-//#define isnan(x)
-//#define isnormal(x)
-#define signbit(x) (x < 0) // will this work or will edge cases kill it? no idea
+//#define fpclassify(x) __fpclassify(x) // this function will be in math.c
+#define isfinite(x) //
+#define isinf(x) (x == INFINITY || x == -INFINITY)
+#define isnan(x) (x != x) // NaN is the only one not equal to itself
+//#define isnormal(x) // Don't know how to implement yet
+#define signbit(x) (x < 0) // fix for signed zeros/NaNs, good enough for now tho
 
 /**************/
 
