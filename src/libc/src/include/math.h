@@ -1,6 +1,11 @@
 #ifndef __MATH_H__
 #define __MATH_H__
 
+// TODO move to a config.h or makefile or something
+// also note that you should turn this off if your processor does't support 
+// the vfmadd213sd instruction
+#define SUPPORTS_FMA_ASM
+
 /*
  * Trying to make the math library up to C99 standard
  * Reference the section '7.12 Mathematics <math.h>' in
@@ -48,14 +53,16 @@
 #define FP_ZERO 2
 #define FP_SUBNORMAL 3
 #define FP_NORMAL 4
-//#define FP_FAST_FMA // not sure if we need these three or not yet
-//#define FP_FAST_FMAF
-//#define FP_FAST_FMAL
+#ifdef SUPPORTS_FMA_ASM
+#define FP_FAST_FMA 
+#define FP_FAST_FMAF
+#define FP_FAST_FMAL
+#endif
 #define FP_ILOGB0 2147483647   // TODO redefine as INT_MAX when have <limits.h>
 #define FP_ILOGBNAN 2147483647 // same as above
 #define MATH_ERRNO 1
 #define MATH_ERREXCEPT 2
-#define math_errhandling 3
+#define math_errhandling (MATH_ERRNO | MATH_ERREXCEPT) // TODO make <fenv.h>
 
 /**************/
 
@@ -105,15 +112,15 @@
 /**************/
 
 /* TRIG */
-// double cos(double x);
+double cos(double x);
 // float cosf(double x);
 // long double cos1(long double x);
 
-// double sin(double x);
+double sin(double x);
 // float sinf(double x);
 // long double sin(long double x);
 
-// double tan(double x);
+double tan(double x);
 // float tanf(double x);
 // long double tan(long double x);
 
@@ -212,6 +219,7 @@
 // float cbrtf(float x);
 // long double cbrtl(long double x);
 
+// The integer version of this is in <stdlib.h>
 // double fabs(double x);
 // float fabsf(float x);
 // long double fabsl(long double x);
@@ -335,7 +343,7 @@
 /**************/
 
 /* FLOATING MULTIPLY ADD */
-// double fma(double x, double y, double z);
+double fma(double x, double y, double z);
 // float fmaf(float x, float y, float z);
 // long double fmal(long double x, long double y, long double z);
 
