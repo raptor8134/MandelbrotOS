@@ -1,22 +1,6 @@
 #include <ctype.h>
 #include <sys/mandelbrot.h>
 
-int isalnum(int c) {
-  return isdigit(c) || isalpha(c);
-}
-
-int isalpha(int c) {
-  return isupper(c) || islower(c);
-}
-
-int isblank(int c) {
-  return c == ' ' || c == '\t';
-}
-
-int iscntrl(int c) {
-  return (c >= 0 && c < ' ') || c == 0x7f /* DEL */;
-}
-
 int isdigit(int c) {
   return c >= '0' && c <= '9';
 }
@@ -60,8 +44,18 @@ int toupper(int c) {
 
 int _toupper(int c) { return toupper(c); }
 
-int isdigit(int c) {
-  if (c >= '0' && c <= '9')
-    return 1;
-  return 0;
+int isalnum(int c) {
+  return isdigit(c) || isalpha(c);
+}
+
+int isalpha(int c) {
+  return isupper(c) || islower(c);
+}
+
+int isblank(int c) {
+  return c == ' ' || c == '\t';
+}
+
+int iscntrl(int c) {
+  return (c >= 0 && c < ' ') || c == '\b';
 }
