@@ -290,9 +290,7 @@ size_t syscall_getppid() {
   return (CURRENT_PROC->parent) ? CURRENT_PROC->parent->pid : (size_t)-1;
 }
 
-void syscall_exit(int code) {
-  sched_exit(code);
-}
+void syscall_exit(int code) { sched_exit(code); }
 
 size_t syscall_fork(registers_t *regs) {
   vmm_load_pagemap(&kernel_pagemap);
@@ -435,6 +433,7 @@ int syscall_fcntl(int fd, int cmd, int arg) {
     case F_DUPFD:;
       syscall_file_t *new_file = kmalloc(sizeof(syscall_file_t));
       *new_file = *file;
+      file->file->ref_count++;
 
       size_t i;
       for (i = arg; i < FDS_COUNT; i++)

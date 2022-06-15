@@ -201,6 +201,7 @@ fs_file_t *tmpfs_create(fs_t *fs, char *path, int mode, int uid, int gid) {
     .last_modification_time = tim,
     .last_status_change_time = tim,
     .creation_time = tim,
+    .ref_count = 1,
   };
 
   path++;
@@ -247,6 +248,7 @@ fs_file_t *tmpfs_mkfifo(fs_t *fs, char *path, int mode, int uid, int gid) {
     .last_status_change_time = tim,
     .creation_time = tim,
     .pipe = kmalloc(sizeof(pipe_t)),
+    .ref_count = 1,
   };
 
   pipe_init(file->pipe, DEFAULT_PIPE_SIZE);
@@ -294,6 +296,7 @@ fs_file_t *tmpfs_mkdir(fs_t *fs, char *path, int mode, int uid, int gid) {
     .last_modification_time = tim,
     .last_status_change_time = tim,
     .creation_time = tim,
+    .ref_count = 1,
   };
 
   path++;
@@ -346,6 +349,7 @@ fs_file_t *tmpfs_mknod(fs_t *fs, char *name, int mode, int uid, int gid,
     .last_modification_time = tim,
     .last_status_change_time = tim,
     .creation_time = tim,
+    .ref_count = 1,
   };
 
   name++;
@@ -392,6 +396,7 @@ fs_t *tmpfs_mount(device_t *dev) {
     .last_modification_time = tim,
     .last_status_change_time = tim,
     .creation_time = tim,
+    .ref_count = 1,
   };
 
   file->path = strdup("/");

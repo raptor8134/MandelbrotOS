@@ -112,10 +112,6 @@ void k_thread() {
   /* sched_run_program("/prog/forktest", args, NULL, "/dev/tty0", "/dev/tty0",
    * "/dev/tty0", 0); */
 
-  printf("Hello Discord user Sisxkiss#0142, This is my own OS!\n");
-  while (1)
-    ;
-
   char *args[] = {"PATH=/prog", NULL};
   sched_run_program("/prog/shell", NULL, args, "/dev/tty0", "/dev/tty0",
                     "/dev/tty0", 0);

@@ -200,6 +200,8 @@ int vfs_fstat(fs_file_t *file, stat_t *stat) {
 }
 
 int vfs_close(fs_file_t *file) {
+  if (--file->ref_count)
+    return 0;
   if (ISFIFO(file) && !file->fs) {
     pipe_free(file->pipe);
     kfree(file->pipe);
@@ -267,6 +269,7 @@ fs_file_t *vfs_mkfifo(char *name, int mode, int uid, int gid, int named) {
     .last_status_change_time = tim,
     .creation_time = tim,
     .pipe = kmalloc(sizeof(pipe_t)),
+    .ref_count = 1,
   };
 
   pipe_init(file->pipe, DEFAULT_PIPE_SIZE);

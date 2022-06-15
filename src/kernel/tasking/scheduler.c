@@ -107,6 +107,7 @@ proc_t *sched_new_proc(proc_t *old_proc, pagemap_t *pagemap, int user) {
         syscall_file_t *sfile = kmalloc(sizeof(syscall_file_t));
         *sfile = *old_proc->fds[i];
         new_proc->fds[i] = sfile;
+        sfile->file->ref_count++;
       }
   }
 
@@ -227,8 +228,6 @@ void sched_destroy_thread(thread_t *thread) {
   kfree(thread);
 }
 
-#include <printf.h>
-
 void sched_exit(int code) {
   /* vmm_load_pagemap(&kernel_pagemap); */
 
@@ -238,26 +237,27 @@ void sched_exit(int code) {
   /* LOCK(sched_lock); */
 
   /* for (size_t i = 0; i < (size_t)current_proc->threads.length; i++) */
-    /* sched_destroy_thread(current_proc->threads.data[i]); */
+  /* sched_destroy_thread(current_proc->threads.data[i]); */
   /* kfree(current_proc->threads.data); */
 
   /* for (size_t i = 0; i < FDS_COUNT; i++)  */
-    /* if (current_proc->fds[i]) { */
-      /* vfs_close(current_proc->fds[i]->file); */
-      /* kfree(current_proc->fds[i]); */
-    /* } */
+  /* if (current_proc->fds[i]) { */
+  /* vfs_close(current_proc->fds[i]->file); */
+  /* kfree(current_proc->fds[i]); */
+  /* } */
   /* kfree(current_proc->fds); */
 
   /* printf("FDS closed"); */
 
   /* current_proc->status = code | 0x200; */
   event_trigger(current_proc->event);
-  
+
   /* vmm_destroy_pagemap(current_proc->pagemap); */
 
   /* UNLOCK(sched_lock); */
 
-  /* vec_remove(&threads[get_locals()->current_thread->priority], get_locals()->current_thread); */
+  /* vec_remove(&threads[get_locals()->current_thread->priority],
+   * get_locals()->current_thread); */
 
   while (1)
     ;
@@ -286,12 +286,10 @@ int sched_waitpid(ssize_t pid, int *status, int options) {
       }
     if (!*events)
       return -ECHILD;
-  } else 
+  } else
     return -EINVAL;
 
   ssize_t which = event_await(events, events_len, !(options & WNOHANG));
-
-  printf("wait done");
 
   if (which == -1)
     return 0;
@@ -299,13 +297,12 @@ int sched_waitpid(ssize_t pid, int *status, int options) {
     child = current_proc->children.data[which];
 
   if (!child) {
-    printf("No child :(\n");
     while (1)
       ;
   }
 
   /* if (status) */
-    /* *status = child->status; */
+  /* *status = child->status; */
 
   /* vec_remove(&current_proc->children, child); */
 

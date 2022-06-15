@@ -14,8 +14,8 @@ int event_await(event_t **events, size_t count, int block) {
 
   for (size_t i = 0; i < count; i++)
     UNLOCK(events[i]->lock);
-  
-  if (!block) 
+
+  if (!block)
     return -1;
 
   while (1)
