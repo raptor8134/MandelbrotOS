@@ -59,3 +59,9 @@ int toupper(int c) {
 }
 
 int _toupper(int c) { return toupper(c); }
+
+int isdigit(int c) {
+  if (c >= '0' && c <= '9')
+    return 1;
+  return 0;
+}

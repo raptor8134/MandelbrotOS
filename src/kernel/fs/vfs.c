@@ -93,10 +93,10 @@ int vfs_mount(char *path, device_t *dev, char *fs_name) {
     dev->fs = fs;
 
   if (dev)
-    klog(3, "Mounted %s filesystem on device %lu on %s\r\n", fs_name, dev->id,
+    klog(3, "Mounted %s filesystem on device %lu on %s\n", fs_name, dev->id,
          path);
   else
-    klog(3, "Mounted %s filesystem on %s\r\n", fs_name, path);
+    klog(3, "Mounted %s filesystem on %s\n", fs_name, path);
 
   return 0;
 }
@@ -200,6 +200,8 @@ int vfs_fstat(fs_file_t *file, stat_t *stat) {
 }
 
 int vfs_close(fs_file_t *file) {
+  if (--file->ref_count)
+    return 0;
   if (ISFIFO(file) && !file->fs) {
     pipe_free(file->pipe);
     kfree(file->pipe);
@@ -267,6 +269,7 @@ fs_file_t *vfs_mkfifo(char *name, int mode, int uid, int gid, int named) {
     .last_status_change_time = tim,
     .creation_time = tim,
     .pipe = kmalloc(sizeof(pipe_t)),
+    .ref_count = 1,
   };
 
   pipe_init(file->pipe, DEFAULT_PIPE_SIZE);
@@ -303,8 +306,8 @@ fs_file_t *vfs_open(char *name) {
 }
 
 int init_vfs() {
-  vfs_mounts.data = kmalloc(sizeof(vfs_mount_info_t));
-  registered_fses.data = kmalloc(sizeof(fs_ops_t));
+  vfs_mounts.data = kmalloc(sizeof(vfs_mount_info_t *));
+  registered_fses.data = kmalloc(sizeof(fs_ops_t *));
 
   return 0;
 }

@@ -7,6 +7,7 @@
 #define EXIT_FAILURE 1
 
 void _Exit(int status);
+void exit(int status);
 void abort();
 int abs(int i);
 double atof(char *arr);

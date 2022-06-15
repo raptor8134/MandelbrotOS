@@ -25,6 +25,7 @@
 #define SYSCALL_ACCESS 18
 #define SYSCALL_PIPE 19
 #define SYSCALL_FCNTL 20
+#define SYSCALL_REMOVE 21
 
 #define PROT_READ 0x1
 #define PROT_WRITE 0x2
@@ -36,14 +37,14 @@
 #define MAP_FIXED 0x4
 #define MAP_ANON 0x8
 
-#define MMAP_START_ADDR 0x80000000000
+#define MMAP_MAX_SIZE 0x2000000
 
 typedef struct mmap_args {
   void *addr;
   size_t length;
   uint64_t flags;
   uint64_t prot;
-  size_t fd;
+  int fd;
   size_t offset;
 } mmap_args_t;
 

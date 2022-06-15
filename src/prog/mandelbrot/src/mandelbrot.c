@@ -1,5 +1,7 @@
+#include <fcntl.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/ioctl.h>
 #include <sys/mandelbrot.h>
 #include <sys/mman.h>
 
@@ -8,9 +10,6 @@
 uint16_t width;
 uint16_t height;
 uint32_t *framebuffer;
-
-uint64_t intsyscall(uint64_t id, uint64_t arg1, uint64_t arg2, uint64_t arg3,
-                    uint64_t arg4, uint64_t arg5);
 
 static inline double cos(double x) {
   register double val;
@@ -187,27 +186,17 @@ double log(double x) {
   return s * (hfsq + R) + dk * ln2_lo - hfsq + f + dk * ln2_hi;
 }
 
+#include <stdio.h>
+
 int main() {
-  size_t fd = intsyscall(SYSCALL_OPEN, (uint64_t) "/dev/fb0", 0, 0, 0, 0);
+  size_t fd = open("/dev/fb0", O_RDWR);
 
-  width =
-    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_WIDTH, (uint64_t)NULL, 0, 0);
-  height =
-    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT, (uint64_t)NULL, 0, 0);
-  size_t bpp =
-    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_BPP, (uint64_t)NULL, 0, 0);
+  width = ioctl(fd, IOCTL_FBDEV_GET_WIDTH, 0);
+  height = ioctl(fd, IOCTL_FBDEV_GET_HEIGHT, 0);
+  size_t bpp = ioctl(fd, IOCTL_FBDEV_GET_BPP, 0);
 
-  mmap_args_t args = (mmap_args_t){
-    .addr = NULL,
-    .fd = fd,
-    .length = width * height * (bpp / 8),
-    .offset = 0,
-    .prot = PROT_READ | PROT_WRITE,
-    .flags = 0,
-  };
-
-  framebuffer =
-    (uint32_t *)intsyscall(SYSCALL_MMAP, (uint64_t)&args, 0, 0, 0, 0);
+  framebuffer = (uint32_t *)mmap(NULL, width * height * (bpp / 8),
+                                 PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
 
   /* pixel_t *pix_buf = (void *)framebuffer; */
 
@@ -260,7 +249,7 @@ int main() {
 
   while (1) {
     char c;
-    intsyscall(SYSCALL_READ, 1, (uint64_t)&c, 1, 0, 0);
+    intsyscall(SYSCALL_READ, 0, (uint64_t)&c, 1, 0, 0);
 
     switch (c) {
       case 'w':

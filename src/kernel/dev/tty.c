@@ -22,9 +22,22 @@ ssize_t tty_read(device_t *dev, size_t start, size_t count, uint8_t *buf) {
   (void)dev;
   (void)start;
   (void)buf;
-  for (size_t i = 0; i < count; i++)
-    buf[i] = getchar();
-  return count;
+
+  size_t init_count = count;
+  while (count) {
+    char c = getchar();
+    if (!c)
+      continue;
+    putchar(c);
+    buf[init_count - count] = c;
+    count--;
+    if (c == '\n')
+      break;
+  }
+
+  buf[init_count - count + 1] = 0;
+
+  return init_count - count;
 }
 
 static device_t tty0 = (device_t){

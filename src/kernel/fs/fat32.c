@@ -814,6 +814,7 @@ fs_file_t *fat_open(fs_t *fs, char *path) {
       .minutes = priv->dir.created_minute,
       .hours = priv->dir.created_hour}),
     .offset = 0,
+    .ref_count = 1,
   };
 
   return file;

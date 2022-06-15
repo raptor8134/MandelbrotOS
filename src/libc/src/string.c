@@ -6,7 +6,7 @@
 char *strchr(char *str, int c) {
   for (; *str && *str != c; str++)
     ;
-  return (*str) ? str : NULL;
+  return (*str) ? str : (c) ? NULL : str;
 }
 
 size_t strlen(char *s) {
@@ -42,4 +42,54 @@ void strcat(char *dest, char *src) {
     dest++;
   while ((*dest++ = *src++))
     ;
+}
+
+void *memset(void *buf, char val, size_t len) {
+  while (len--)
+    ((char *)buf)[len] = val;
+  return buf;
+}
+
+char *strcpy(char *dest, char *src) {
+  char *temp = dest;
+  while ((*dest++ = *src++))
+    ;
+  return temp;
+}
+
+char *strncpy(char *dest, char *src, size_t n) {
+  char *temp = dest;
+  while (*src && n--)
+    *dest++ = *src++;
+  *dest = '\0';
+  return temp;
+}
+
+size_t strspn(char *cs, char *ct) {
+  size_t n;
+  char *p;
+  for (n = 0; *cs; cs++, n++) {
+    for (p = ct; *p && *p != *cs; p++)
+      ;
+    if (!*p)
+      break;
+  }
+  return n;
+}
+
+size_t strcspn(char *cs, char *ct) {
+  size_t n;
+  char *p;
+  for (n = 0; *cs; cs++, n++) {
+    for (p = ct; *p && *p == *cs; p++)
+      ;
+    if (!*p)
+      break;
+  }
+  return n;
+}
+
+char *strpbrk(char *s, char *b) {
+  s += strcspn(s, b);
+  return *s ? (char *)s : NULL;
 }

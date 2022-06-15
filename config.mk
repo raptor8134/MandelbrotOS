@@ -10,12 +10,15 @@ KERNEL_BUILD_DIRECTORY := ../../build/kernel/
 PROG_BUILD_DIRECTORY := ../../build/prog/
 DIRECTORY_GUARD = mkdir -p build/
 
-ASFLAGS = -f elf64 -O3 -static
+# OPTIMISATION = -O3
+OPTIMISATION = -g
+
+ASFLAGS = -f elf64 $(OPTIMISATION) -static
 
 CFLAGS := \
 	-Werror \
 	-Wall \
 	-Wextra \
 	-std=gnu99 \
-	-O3 \
+	$(OPTIMISATION) \
 	-pipe \

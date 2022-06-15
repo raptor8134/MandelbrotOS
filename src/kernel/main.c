@@ -50,8 +50,15 @@ void *stivale2_get_tag(struct stivale2_struct *stivale2_struct, uint64_t id) {
   }
 }
 
+void k_thread2() {
+  /* printf("Hello from thread 2!\n"); */
+  while (1) {
+    /* printf("Thread 2\n"); */
+  }
+}
+
 void k_thread() {
-  klog(3, "Scheduler started and running\r\n");
+  klog(3, "Scheduler started and running\n");
   klog_init(init_rtc(), "Real time clock");
   klog_init(init_serial(), "Serial");
   klog_init(pci_enumerate(), "PCI");
@@ -71,23 +78,47 @@ void k_thread() {
   klog_init(init_fbdev("/dev"), "Framebuffer device");
   klog_init(init_mousedev("/dev"), "Mouse device");
 
-  fs_file_t *tty0 = vfs_open("/dev/tty0");
+  /* fs_file_t *tty0 = vfs_open("/dev/tty0"); */
 
-  syscall_file_t *fil = kmalloc(sizeof(syscall_file_t));
-  *fil = (syscall_file_t){
-    .file = tty0,
-    .flags = O_RDWR,
-  };
+  /* syscall_file_t *fil = kmalloc(sizeof(syscall_file_t)); */
+  /* *fil = (syscall_file_t){ */
+  /* .file = tty0, */
+  /* .flags = O_RDWR, */
+  /* }; */
 
-  tty0->offset = 0;
+  /* tty0->offset = 0; */
 
-  proc_t *user_proc = sched_new_proc(0, 0, 1, 0, NULL, 0, 0, 0, 0, 0);
-  user_proc->fds[0] = fil;
-  user_proc->fds[1] = fil;
-  user_proc->fds[2] = fil;
+  /* proc_t *user_proc = sched_new_proc(0, 0, 1, 0, NULL, 0, 0, 0, 0, 0); */
+  /* user_proc->fds[0] = fil; */
+  /* user_proc->fds[1] = fil; */
+  /* user_proc->fds[2] = fil; */
 
-  elf_run_binary("/prog/img", user_proc, 1);
+  /* sched_execve("/prog/forktest", NULL, NULL, "/dev/tty0", "/dev/tty0",
+   * "/dev/tty0", 0); */
+  /* char *env[2] = {"PATH=/prog", NULL}; */
+  /* sched_execve("/prog/shell", NULL, env, "/dev/tty0", "/dev/tty0",
+   * "/dev/tty0", */
+  /* 0); */
 
+  /* elf_run_binary("/prog/img", user_proc, 1); */
+
+  /* sched_new_thread(NULL, kernel_proc, (uintptr_t)k_thread2, 5, 0, 0, 1); */
+  /* sched_new_thread(NULL, kernel_proc, (uintptr_t)k_thread2, 0, 0, 0, 1); */
+  /* sched_new_thread(NULL, kernel_proc, (uintptr_t)k_thread2, 0, 0, 0, 1); */
+
+  /* sched_run_program("/prog/img", NULL, NULL, "/dev/tty0", "/dev/tty0",
+   * "/dev/tty0", 0); */
+  /* char *args[2] = {"Hello, world!\n", NULL}; */
+  /* sched_run_program("/prog/forktest", args, NULL, "/dev/tty0", "/dev/tty0",
+   * "/dev/tty0", 0); */
+
+  char *args[] = {"PATH=/prog", NULL};
+  sched_run_program("/prog/shell", NULL, args, "/dev/tty0", "/dev/tty0",
+                    "/dev/tty0", 0);
+
+  while (1) {
+    /* printf("Thread 1\n"); */
+  }
   while (1)
     ;
 }
@@ -124,5 +155,5 @@ void kernel_main(struct stivale2_struct *bootloader_info) {
   klog_init(init_acpi(rsdp_info), "ACPI");
   klog_init(init_smp(smp_info), "SMP");
 
-  scheduler_init((uintptr_t)k_thread);
+  init_sched((uintptr_t)k_thread);
 }
