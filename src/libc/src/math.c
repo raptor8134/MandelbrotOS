@@ -42,10 +42,11 @@ tan(double x) { // using fsincos since its faster than sequential fsin and fcos
 /* EXPONENTIALS */
 
 /* LOGARITHMS */
-double log2(double x){ // TODO get this to work on the os and not just in testing
-    double retval;
-    asm("fyl2x" : "=t"(retval) : "r"(1), "r"(x));
-    return retval;
+double
+log2(double x) { // TODO get this to work on the os and not just in testing
+  double retval;
+  asm("fyl2x" : "=t"(retval) : "r"(1), "r"(x));
+  return retval;
 }
 
 /* POWER AND ABS */
@@ -54,15 +55,15 @@ double log2(double x){ // TODO get this to work on the os and not just in testin
 //#define fabsf fabs
 //#define fabsl fabs
 
-double hypot(double x, double y){ return sqrt(x*x + y*y); }
-float hypotf(float x, float y){ return (float)sqrt(x*x + y*y); }
+double hypot(double x, double y) { return sqrt(x * x + y * y); }
+float hypotf(float x, float y) { return (float)sqrt(x * x + y * y); }
 
-double sqrt(double x){
-    double retval;
-    asm("sqrtsd %0, %1" : "=x"(retval) : "x"(x));
-    return retval;
+double sqrt(double x) {
+  double retval;
+  asm("sqrtsd %0, %1" : "=x"(retval) : "x"(x));
+  return retval;
 }
-float sqrtf(float x){ return (float)sqrt(x); }
+float sqrtf(float x) { return (float)sqrt(x); }
 
 /* ERROR AND GAMMA */
 
@@ -73,9 +74,9 @@ float sqrtf(float x){ return (float)sqrt(x); }
 /* MANIPULATION */
 
 /* DIFF MAX MIN */
-double fdim(double x, double y){ return fabs(x - y); }
-float fdimf(float x, float y){ return fabsf(x - y); }
-long double fdiml(long double x, long double y){ return fabsl(x - y); }
+double fdim(double x, double y) { return fabs(x - y); }
+float fdimf(float x, float y) { return fabsf(x - y); }
+long double fdiml(long double x, long double y) { return fabsl(x - y); }
 
 // In header file
 //#define fmin(x, y) (x > y ? y : x)
