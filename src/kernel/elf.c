@@ -29,7 +29,7 @@
 
 char elf_ident[4] = {0x7f, 'E', 'L', 'F'};
 
-uint8_t elf_run_binary(char *path, proc_t *proc, int auto_enqueue) {
+uint8_t elf_run_binary(char *path, pagemap_t *pagemap, uintptr_t *entry) {
   fs_file_t *file = vfs_open(path);
   uint8_t *buffer = kmalloc(file->length);
   vfs_read(file, buffer, 0, file->length);
@@ -55,8 +55,7 @@ uint8_t elf_run_binary(char *path, proc_t *proc, int auto_enqueue) {
                         PAGE_SIZE) *
                  PAGE_SIZE;
            j += PAGE_SIZE)
-        vmm_map_page(proc->pagemap, (uintptr_t)addr + j,
-                     prog_header->virt_addr + j,
+        vmm_map_page(pagemap, (uintptr_t)addr + j, prog_header->virt_addr + j,
                      (prog_header[i].flags & PF_W) ? 0b111 : 0b101);
 
       mmap_range_t *mmap_range = kmalloc(sizeof(mmap_range_t));
@@ -75,7 +74,7 @@ uint8_t elf_run_binary(char *path, proc_t *proc, int auto_enqueue) {
         .virt_addr = prog_header[i].virt_addr,
       };
 
-      vec_push(&proc->pagemap->ranges, mmap_range);
+      vec_push(&pagemap->ranges, mmap_range);
 
       memcpy(((char *)((uintptr_t)addr + PHYS_MEM_OFFSET)) +
                (prog_header[i].virt_addr & (PAGE_SIZE - 1)),
@@ -83,10 +82,8 @@ uint8_t elf_run_binary(char *path, proc_t *proc, int auto_enqueue) {
     }
   }
 
-  proc->regs.rip = header->entry;
-
-  if (auto_enqueue)
-    sched_enqueue_proc(proc);
+  if (entry)
+    *entry = elf_header->entry;
 
   return 0;
 }

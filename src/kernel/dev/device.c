@@ -10,7 +10,7 @@
 vec_t(device_t *) devices;
 
 int init_devices() {
-  devices.data = kmalloc(sizeof(device_t));
+  devices.data = kmalloc(sizeof(device_t *));
   return 0;
 }
 

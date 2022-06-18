@@ -1,5 +1,7 @@
+#include <fcntl.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/ioctl.h>
 #include <sys/mandelbrot.h>
 #include <sys/mman.h>
 
@@ -157,34 +159,24 @@ double pow(double base, int exponent) {
   return result;
 }
 
+#include <stdio.h>
+
 void main() {
-  /* char msg[] = "In ring 3! Got a PID of  \r\n"; */
+  /* char msg[] = "In ring 3! Got a PID of  \n"; */
   /* size_t len = strlen(msg); */
   /* msg[len - 3] = val + '0'; */
 
   /* while (1) */
   /* ; */
 
-  size_t fd = intsyscall(SYSCALL_OPEN, (uint64_t) "/dev/fb0", 0, 0, 0, 0);
+  size_t fd = open("/dev/fb0", O_RDWR);
 
-  width =
-    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_WIDTH, (uint64_t)NULL, 0, 0);
-  height =
-    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT, (uint64_t)NULL, 0, 0);
-  size_t bpp =
-    intsyscall(SYSCALL_IOCTL, fd, IOCTL_FBDEV_GET_HEIGHT, (uint64_t)NULL, 0, 0);
+  width = ioctl(fd, IOCTL_FBDEV_GET_WIDTH, 0);
+  height = ioctl(fd, IOCTL_FBDEV_GET_HEIGHT, 0);
+  size_t bpp = ioctl(fd, IOCTL_FBDEV_GET_BPP, 0);
 
-  mmap_args_t args = (mmap_args_t){
-    .addr = NULL,
-    .fd = fd,
-    .length = width * height * (bpp / 8),
-    .offset = 0,
-    .prot = PROT_READ | PROT_WRITE,
-    .flags = 0,
-  };
-
-  framebuffer =
-    (uint32_t *)intsyscall(SYSCALL_MMAP, (uint64_t)&args, 0, 0, 0, 0);
+  framebuffer = (uint32_t *)mmap(NULL, width * height * (bpp / 8),
+                                 PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
 
   for (size_t i = 0; i < width * height; i++)
     framebuffer[i] = 0xffffff;
@@ -231,7 +223,6 @@ void main() {
   /* } */
 
   while (1) {
-
     double amp = 300;
     double ang_inc = 1;
 

@@ -146,6 +146,8 @@ typedef struct fs_file {
   posix_time_t last_status_change_time;
   posix_time_t creation_time;
 
+  int ref_count;
+
   int mode;
   size_t length;
   uint64_t inode;

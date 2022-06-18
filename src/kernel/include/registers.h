@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-typedef volatile struct registers {
+typedef struct registers {
   uint64_t r15;
   uint64_t r14;
   uint64_t r13;

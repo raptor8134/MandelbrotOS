@@ -41,6 +41,9 @@ void vmm_memcpy(pagemap_t *pagemap_1, uintptr_t virtual_address_1,
 uintptr_t vmm_virt_to_phys(pagemap_t *pagemap, uintptr_t virtual_address);
 uintptr_t vmm_get_kernel_address(pagemap_t *pagemap, uintptr_t virtual_address);
 void vmm_destroy_pagemap(pagemap_t *pagemap);
+void vmm_mmap_range(pagemap_t *pagemap, uintptr_t phys_addr,
+                    uintptr_t virt_addr, size_t length, int flags, int prot);
+uintptr_t vmm_range_to_addr(pagemap_t *pagemap, uintptr_t virt_addr);
 int init_vmm();
 
 #endif

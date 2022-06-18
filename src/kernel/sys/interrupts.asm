@@ -144,7 +144,7 @@ global syscall_isr
 extern c_syscall_handler
 
 syscall_isr:
-  cli
+  ; cli
   cld
   
   push 0
@@ -190,3 +190,8 @@ schedule_irq:
   
   mov rdi, rsp
   call schedule
+
+  popaq
+  add rsp, 16
+
+  iretq

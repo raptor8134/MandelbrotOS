@@ -11,7 +11,7 @@
 #include <string.h>
 #include <vprintf.h>
 
-static volatile lock_t printf_lock = {0};
+static lock_t printf_lock = {0};
 
 // Not my implementation. Taken from https://wiki.osdev.org/User:A22347/Printf
 
@@ -84,7 +84,6 @@ char *__int_str(intmax_t i, char b[], int base, bool plusSignIfNeeded,
 char *__uint_str(uintmax_t i, char b[], int base, bool plusSignIfNeeded,
                  bool spaceSignIfNeeded, int paddingNo, bool justify,
                  bool zeroPad) {
-
   char digit[32] = {0};
   memset(digit, 0, 32);
   strcpy(digit, "0123456789");

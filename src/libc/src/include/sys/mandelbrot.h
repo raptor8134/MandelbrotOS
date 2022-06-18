@@ -38,6 +38,7 @@
 #define SYSCALL_ACCESS 18
 #define SYSCALL_PIPE 19
 #define SYSCALL_FCNTL 20
+#define SYSCALL_REMOVE 21
 
 #define IOCTL_FBDEV_GET_WIDTH 1
 #define IOCTL_FBDEV_GET_HEIGHT 2
@@ -52,7 +53,7 @@ typedef struct mmap_args {
   size_t length;
   uint64_t flags;
   uint64_t prot;
-  size_t fd;
+  int fd;
   size_t offset;
 } mmap_args_t;
 

@@ -5,6 +5,7 @@ CC = ../../cross/bin/x86_64-elf-gcc
 AS = nasm
 
 CFLAGS := $(CFLAGS) \
+	-Wno-implicit-fallthrough \
 	-Isrc/include \
 	-ffreestanding \
 	-mno-red-zone \

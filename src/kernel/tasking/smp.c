@@ -28,13 +28,14 @@ void smp_init_cpu(struct stivale2_smp_info *smp_info) {
     load_idt();
   }
 
+  vmm_load_pagemap(&kernel_pagemap);
+
   cpu_locals_t *locals = (cpu_locals_t *)smp_info->extra_argument;
 
   set_and_load_tss((uintptr_t)&locals->tss);
 
-  memset(locals->last_run_thread_index, 0, SCHEDULE_REG * sizeof(size_t));
-  locals->current_proc = NULL;
-  locals->current_priority_peg = 0;
+  memset(locals->last_run_thread_index, 0, PRIORITY_LEVELS * sizeof(size_t));
+  locals->current_thread = NULL, locals->current_priority_peg = 0;
   locals->current_priority = 0;
   locals->lapic_id = smp_info->lapic_id;
 
@@ -43,7 +44,7 @@ void smp_init_cpu(struct stivale2_smp_info *smp_info) {
   init_lapic();
   lapic_timer_get_freq();
 
-  klog(3, "Brought up CPU #%lu\r\n", locals->cpu_number);
+  klog(3, "Brought up CPU #%lu\n", locals->cpu_number);
 
   LOCKED_INC(inited_cpus);
 

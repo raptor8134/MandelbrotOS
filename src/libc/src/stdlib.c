@@ -12,8 +12,8 @@ int liballoc_lock() { return 0; }
 int liballoc_unlock() { return 0; }
 
 void *liballoc_alloc_pages(size_t pages) {
-  return mmap(NULL, pages * getpagesize(), PROT_READ | PROT_WRITE, MAP_ANON, 0,
-              0);
+  return mmap(NULL, pages * getpagesize(), PROT_READ | PROT_WRITE,
+              MAP_PRIVATE | MAP_ANON, -1, 0);
 }
 
 int liballoc_free_pages(void *ptr, size_t pages) {
@@ -29,6 +29,8 @@ void *calloc(size_t size, size_t size2) { return liballoc_calloc(size, size2); }
 void *realloc(void *ptr, size_t size) { return liballoc_realloc(ptr, size); }
 
 void _Exit(int status) { intsyscall(SYSCALL_EXIT, status, 0, 0, 0, 0); }
+
+void exit(int status) { _exit(status); }
 
 void abort() {}
 

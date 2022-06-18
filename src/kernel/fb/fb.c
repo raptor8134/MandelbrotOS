@@ -71,7 +71,6 @@ void putc(char c, uint32_t fgc, uint32_t bgc) {
         knewline();
       else
         curr_y += FONT_HEIGHT;
-      break;
     case '\r':
       curr_x = 0;
       break;

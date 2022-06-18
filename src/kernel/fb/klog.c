@@ -65,14 +65,14 @@ int klog_init(int type, char *message) {
       fb_set_fg(KLOG_GREEN);
       printf("OKAY");
       fb_set_fg(old_fg);
-      printf(" ] %s initialized \r\n", message);
+      printf(" ] %s initialized \n", message);
       break;
     case 1:;
       printf("[ ");
       fb_set_fg(KLOG_RED);
       printf("FAIL");
       fb_set_fg(old_fg);
-      printf(" ] %s not initialized \r\n", message);
+      printf(" ] %s not initialized \n", message);
       break;
   }
 
