@@ -2,7 +2,7 @@
 #define __MATH_H__
 
 // TODO move to a config.h or makefile or something
-// also note that you should turn this off if your processor does't support 
+// also note that you should turn this off if your processor does't support
 // the vfmadd213sd instruction
 #define SUPPORTS_FMA_ASM
 
@@ -54,7 +54,7 @@
 #define FP_SUBNORMAL 3
 #define FP_NORMAL 4
 #ifdef SUPPORTS_FMA_ASM
-#define FP_FAST_FMA 
+#define FP_FAST_FMA
 #define FP_FAST_FMAF
 #define FP_FAST_FMAL
 #endif
@@ -196,7 +196,7 @@ double tan(double x);
 // float log1pf(float x);
 // long double log1pl(long double x);
 
-// double log2(double x);
+double log2(double x);
 // float log2f(float x);
 // long double log2l(long double x);
 
@@ -220,20 +220,20 @@ double tan(double x);
 // long double cbrtl(long double x);
 
 // The integer version of this is in <stdlib.h>
-// double fabs(double x);
-// float fabsf(float x);
-// long double fabsl(long double x);
+#define fabs(x) (x > 0 ? x : -x)
+#define fabsf fabs
+#define fabsl fabs
 
-// double hypot(double x, double y);
-// float hypotf(float x, float y);
+double hypot(double x, double y);
+float hypotf(float x, float y);
 // long double hypotl(long double x, long double y);
 
 // double pow(double x, double y);
 // float powf(float x, float y);
 // long double powl(long double x, long double y);
 
-// double sqrt(double x);
-// float sqrtf(float x);
+double sqrt(double x);
+float sqrtf(float x);
 // long double sqrtl(long double x);
 
 /**************/
@@ -328,17 +328,17 @@ double tan(double x);
 /**************/
 
 /* DIFF MAX MIN */
-// double fdim(double x, double y):
-// float fdimf(float x, float y):
-// long double fdiml(long double x, long double y):
+double fdim(double x, double y);
+float fdimf(float x, float y);
+long double fdiml(long double x, long double y);
 
-// fmax(double x, double y);
-// fmaxf(float x, float y);
-// fmaxl(long double x, long double y);
+#define fmin(x, y) (x > y ? y : x)
+#define fminf(x, y) (x > y ? y : x)
+#define fminl(x, y) (x > y ? y : x)
 
-// fmin(double x, double y);
-// fminf(float x, float y);
-// fminl(long double x, long double y);
+#define fmax(x, y) (x > y ? x : y)
+#define fmaxf(x, y) (x > y ? x : y)
+#define fmaxl(x, y) (x > y ? x : y)
 
 /**************/
 

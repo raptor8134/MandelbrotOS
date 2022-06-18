@@ -2,10 +2,10 @@
 
 /*
  * TODO move all these sections to seperate files
+ * TODO dont use so much asm
+ * Note that `#define`s are in this file commented out, so that you don't
+ * have to switch between this and <math.h> to see what a macro does
  *
- * Thanks to nvidia for doing one good thing for the world and 
- * having all these functions available for reference
- * https://developer.download.nvidia.com/cg/index_stdlib.html
  */
 
 /* INVERSE TRIG */
@@ -13,22 +13,26 @@
 /* TRIG */
 // TODO change to a more efficient algorithm, the asm instruction
 // sucks but will work for now
+// Helpful resources for asm and constraints:
+// https://www.felixcloutier.com/x86/
+// https://www.linuxtopia.org/online_books/programming_tool_guides/linux_using_gnu_compiler_collection/constraints.html
 double cos(double x) {
   double retval;
-  asm ("fcos" : "=t"(retval) : "0"(x));
+  asm("fcos" : "=t"(retval) : "0"(x));
   return retval;
 }
 
 double sin(double x) {
   double retval;
-  asm ("fsin" : "=t"(retval) : "0"(x));
+  asm("fsin" : "=t"(retval) : "0"(x));
   return retval;
 }
 
-double tan(double x) { // using fsincos since its faster than sequential fsin and fcos
+double
+tan(double x) { // using fsincos since its faster than sequential fsin and fcos
   double s, c;
   asm("fsincos" : "=t"(s), "=u"(c) : "0"(x));
-  return s/c;
+  return s / c; // TODO handle floating point exceptions TODO
 }
 
 /* HYPERBOLIC INVERSE TRIG */
@@ -38,8 +42,27 @@ double tan(double x) { // using fsincos since its faster than sequential fsin an
 /* EXPONENTIALS */
 
 /* LOGARITHMS */
+double log2(double x){ // TODO get this to work on the os and not just in testing
+    double retval;
+    asm("fyl2x" : "=t"(retval) : "r"(1), "r"(x));
+    return retval;
+}
 
 /* POWER AND ABS */
+// In header file
+//#define fabs(x) (x > 0 ? x : -x)
+//#define fabsf fabs
+//#define fabsl fabs
+
+double hypot(double x, double y){ return sqrt(x*x + y*y); }
+float hypotf(float x, float y){ return (float)sqrt(x*x + y*y); }
+
+double sqrt(double x){
+    double retval;
+    asm("sqrtsd %0, %1" : "=x"(retval) : "x"(x));
+    return retval;
+}
+float sqrtf(float x){ return (float)sqrt(x); }
 
 /* ERROR AND GAMMA */
 
@@ -50,20 +73,33 @@ double tan(double x) { // using fsincos since its faster than sequential fsin an
 /* MANIPULATION */
 
 /* DIFF MAX MIN */
+double fdim(double x, double y){ return fabs(x - y); }
+float fdimf(float x, float y){ return fabsf(x - y); }
+long double fdiml(long double x, long double y){ return fabsl(x - y); }
+
+// In header file
+//#define fmin(x, y) (x > y ? y : x)
+//#define fminf fmin
+//#define fminl fmin
+
+// In header file
+//#define fmax(x, y) (x > y ? x : y)
+//#define fmaxf fmax
+//#define fmaxl fmax
 
 /* FLOATING MULTIPLY ADD */
 // Inlined because its short (2 and 1 instructions) in either case
 // Note that it needs -O1 or greater and vfmadd213sd support
 // (#define SUPPORTS_FMA_ASM ) for the 1 instruction scenario
-inline double fma(double x, double y, double z){
-    double retval;
-#ifdef SUPPORTS_FMA_ASM 
-    asm("vfmadd213sd %0, %1, %2" : "+x"(x) : "x"(y), "x"(z) );
-    retval = x;
+inline double fma(double x, double y, double z) {
+  double retval;
+#ifdef SUPPORTS_FMA_ASM
+  asm("vfmadd213sd %0, %1, %2" : "+x"(x) : "x"(y), "x"(z));
+  retval = x;
 #else
-    retval = x * y + z;
+  retval = x * y + z;
 #endif
-    return retval;
+  return retval;
 }
 
 /* COMPARISON */
