@@ -42,10 +42,9 @@ tan(double x) { // using fsincos since its faster than sequential fsin and fcos
 /* EXPONENTIALS */
 
 /* LOGARITHMS */
-double
-log2(double x) { // TODO get this to work on the os and not just in testing
+double log2(double x) {
   double retval;
-  asm("fyl2x" : "=t"(retval) : "r"(1), "r"(x));
+  asm("fyl2x" : "=t"(retval) : "0"(x), "u"(1.0));
   return retval;
 }
 
@@ -80,13 +79,13 @@ long double fdiml(long double x, long double y) { return fabsl(x - y); }
 
 // In header file
 //#define fmin(x, y) (x > y ? y : x)
-//#define fminf fmin
-//#define fminl fmin
+//#define fminf(x, y) (x > y ? y : x)
+//#define fminl(x, y) (x > y ? y : x)
 
 // In header file
 //#define fmax(x, y) (x > y ? x : y)
-//#define fmaxf fmax
-//#define fmaxl fmax
+//#define fmaxf(x, y) (x > y ? x : y)
+//#define fmaxl(x, y) (x > y ? x : y)
 
 /* FLOATING MULTIPLY ADD */
 // Inlined because its short (2 and 1 instructions) in either case
