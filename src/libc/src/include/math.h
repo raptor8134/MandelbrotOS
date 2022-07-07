@@ -35,7 +35,6 @@
 /**************/
 
 /* MACROS */
-// TODO make a <limits.h> so this is more sane
 #define float_t float
 #define double_t double
 #define FLT_EVAL_METHOD 0
@@ -58,8 +57,8 @@
 #define FP_FAST_FMAF
 #define FP_FAST_FMAL
 #endif
-#define FP_ILOGB0 -2147483648 // TODO redefine these as INT_MIN
-#define FP_ILOGBNAN -2147483648
+#define FP_ILOGB0 INT_MIN 
+#define FP_ILOGBNAN INT_MIN
 #define MATH_ERRNO 1
 #define MATH_ERREXCEPT 2
 #define math_errhandling (MATH_ERRNO | MATH_ERREXCEPT) // TODO make <fenv.h>

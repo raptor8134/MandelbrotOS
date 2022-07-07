@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <limits.h>
 
 /*
  * TODO move all these sections to seperate files
@@ -85,7 +86,7 @@ int ilogb(double x) {
   if (x == 0) {
     retval = FP_ILOGB0;
   } else if (isinf(x)) {
-    retval = 2147483647; // TODO change to INT_MAX
+    retval = INT_MAX;
   } else if (isnan(x)) {
     retval = FP_ILOGBNAN;
   } else {
