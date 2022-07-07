@@ -1,12 +1,50 @@
 #include <math.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 /*
  * TODO move all these sections to seperate files
  * TODO dont use so much asm
+ * TODO implement <errno.h> error handling for functions that need it
  * Note that `#define`s are in this file commented out, so that you don't
  * have to switch between this and <math.h> to see what a macro does
  *
  */
+
+/* RANDOM INTERNALS */
+// expose fyl2x asm instruction
+inline double __fyl2x(double x, double y) {
+  double retval;
+  asm("fyl2x" : "=t"(retval) : "0"(x), "u"(y));
+  return retval;
+}
+
+// signbit internals
+// TODO fix for possible big-endian scenario (<endian.h>?)
+int __signbit(double x) {
+  union {
+    double d;
+    uint8_t i[8];
+  } u;
+  u.d = x;
+  return (u.i[7] & 0x80) >> 7;
+}
+int __signbitf(float x) {
+  union {
+    float d;
+    uint8_t i[4];
+  } u;
+  u.d = x;
+  return (u.i[3] & 0x80) >> 7;
+}
+int __signbitl(long double x) {
+  union {
+    long double d;
+    uint8_t i[10];
+  } u;
+  u.d = x;
+  return (u.i[9] & 0x80) >> 7;
+}
 
 /* INVERSE TRIG */
 
@@ -42,17 +80,49 @@ tan(double x) { // using fsincos since its faster than sequential fsin and fcos
 /* EXPONENTIALS */
 
 /* LOGARITHMS */
-double log2(double x) {
-  double retval;
-  asm("fyl2x" : "=t"(retval) : "0"(x), "u"(1.0));
+int ilogb(double x) {
+  int retval;
+  if (x == 0) {
+    retval = FP_ILOGB0;
+  } else if (isinf(x)) {
+    retval = 2147483647; // TODO change to INT_MAX
+  } else if (isnan(x)) {
+    retval = FP_ILOGBNAN;
+  } else {
+    retval = (int)logb(x);
+  }
   return retval;
 }
+int ilogbf(float x) { return ilogb((double)x); }
+
+// TODO actually make this optimal and not a disgusting mess that
+// probably doesn't work
+double ldexp(double x, int exp) {
+  if (x == 0 || abs(x) == INFINITY || exp == 0 || isnan(x)) {
+    return x;
+  } else if (abs(exp) >= (int)sizeof(long long int)) {
+    return x > 0 ? HUGE_VAL : -HUGE_VAL;
+  } else if (x > 0) {
+    return x * (1LL << exp);
+  } else {
+    return x / (1LL << (-exp));
+  }
+}
+
+double log2(double x) { return __fyl2x(x, 1.0); }
+float log2f(float x) { return (float)__fyl2x((double)x, 1.0); }
+
+// base of logb is only not 2 on the IBM 360 and derivatives(ancient),
+// so we can just use log2 for all cases
+// if anyone gets this os to run on a 360 they can figure it out
+double logb(double x) { return log2(fabs(x)); }
+float logbf(float x) { return log2f(fabsf(x)); }
 
 /* POWER AND ABS */
 // In header file
 //#define fabs(x) (x > 0 ? x : -x)
-//#define fabsf fabs
-//#define fabsl fabs
+//#define fabsf(x) fabs(x)
+//#define fabsl(x) fabs(x)
 
 double hypot(double x, double y) { return sqrt(x * x + y * y); }
 float hypotf(float x, float y) { return (float)sqrt(x * x + y * y); }
@@ -67,8 +137,39 @@ float sqrtf(float x) { return (float)sqrt(x); }
 /* ERROR AND GAMMA */
 
 /* NEAREST INTEGER */
+double ceil(double x) { return (double)((long long int)x) + !__signbit(x); }
+float ceilf(float x) { return (float)((long long int)x) + !__signbitf(x); }
+long double ceill(long double x) { return (long double)((long long int)x) + !__signbitl(x); }
+
+double floor(double x) { return (double)((long long int)x + __signbit(x)); }
+float floorf(float x) { return (float)((long long int)x) + __signbitf(x); }
+long double floorl(long double x) { return (long double)((long long int)x) + __signbitl(x); }
+
+// TODO make round() branchless (something with signbit internals and xor
+// prolly)
+double round(double x) { return floor(x + 0.5 * (x > 0 ? 1 : -1)); }
+float roundf(float x) { return floorf(x + 0.5 * (x > 0 ? 1 : -1)); }
+long double roundl(long double x) { return floorl(x + 0.5 * (x > 0 ? 1 : -1)); }
+
+double trunc(double x) { return (double)((long long int)x); }
+float truncf(float x) { return (float)((long long int)x); }
+long double truncl(long double x) { return (long double)((long long int)x); }
 
 /* REMAINDER */
+double fmod(double x, double y) {
+  return x - (int)(x / y) * y; // TODO make this NaN and inf proof
+}
+
+double remainder(double x, double y) {
+  return x - round(x / y) * y; // TODO same as fmod
+}
+
+// note that the standardese specifying modulo whatever for
+// quo is just saying that integer overflows are ok here
+double remquo(double x, double y, int *quo) {
+  *quo = (int)(x / y);
+  return remainder(x, y);
+}
 
 /* MANIPULATION */
 
@@ -88,9 +189,6 @@ long double fdiml(long double x, long double y) { return fabsl(x - y); }
 //#define fmaxl(x, y) (x > y ? x : y)
 
 /* FLOATING MULTIPLY ADD */
-// Inlined because its short (2 and 1 instructions) in either case
-// Note that it needs -O1 or greater and vfmadd213sd support
-// (#define SUPPORTS_FMA_ASM ) for the 1 instruction scenario
 inline double fma(double x, double y, double z) {
   double retval;
 #ifdef SUPPORTS_FMA_ASM

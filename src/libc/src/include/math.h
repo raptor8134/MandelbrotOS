@@ -58,8 +58,8 @@
 #define FP_FAST_FMAF
 #define FP_FAST_FMAL
 #endif
-#define FP_ILOGB0 2147483647   // TODO redefine as INT_MAX when have <limits.h>
-#define FP_ILOGBNAN 2147483647 // same as above
+#define FP_ILOGB0 -2147483648 // TODO redefine these as INT_MIN
+#define FP_ILOGBNAN -2147483648
 #define MATH_ERRNO 1
 #define MATH_ERREXCEPT 2
 #define math_errhandling (MATH_ERRNO | MATH_ERREXCEPT) // TODO make <fenv.h>
@@ -67,12 +67,19 @@
 /**************/
 
 /* CLASSIFICATION MACROS */
-//#define fpclassify(x) __fpclassify(x) // this function will be in math.c
+//#define fpclassify(x) __fpclassify(x) // this function will (maybe) be in
+//math.c
 #define isfinite(x) //
 #define isinf(x) (x == INFINITY || x == -INFINITY)
 #define isnan(x) (x != x) // NaN is the only one not equal to itself
 //#define isnormal(x) // Don't know how to implement yet
-#define signbit(x) (x < 0) // fix for signed zeros/NaNs, good enough for now tho
+#define signbit(x)                                                             \
+  ((sizeof(x) == sizeof(float))    ? __signbitf(x)                             \
+   : (sizeof(x) == sizeof(double)) ? __signbit(x)                              \
+                                   : __signbitl(x))
+int __signbit(double x);
+int __signbitf(float x);
+int __signbitl(long double x);
 
 /**************/
 
@@ -176,11 +183,11 @@ double tan(double x);
 /**************/
 
 /* LOGARITHMS */
-// int ilogb(double x);
-// int ilogbf(float x);
+int ilogb(double x);
+int ilogbf(float x);
 // int ilogbl(long double x);
 
-// double ldexp(double x, int exp);
+double ldexp(double x, int exp);
 // float ldexpf(float x, int exp);
 // long double ldexpl(long double x, int exp);
 
@@ -197,11 +204,11 @@ double tan(double x);
 // long double log1pl(long double x);
 
 double log2(double x);
-// float log2f(float x);
+float log2f(float x);
 // long double log2l(long double x);
 
-// double logb(double x);
-// float logbf(float x);
+double logb(double x);
+float logbf(float x);
 // long double logbl(long double x);
 
 // double scalbn(double x, int n);
@@ -259,13 +266,13 @@ float sqrtf(float x);
 /**************/
 
 /* NEAREST INTEGER */
-// double ceil(double x);
-// float ceilf(float x);
-// long double ceill(long double x);
+double ceil(double x);
+float ceilf(float x);
+long double ceill(long double x);
 
-// double floor(double x);
-// float floorf(float x);
-// long double floorl(long double x);
+double floor(double x);
+float floorf(float x);
+long double floorl(long double x);
 
 // double nearbyint(double x);
 // float nearbyintf(float x);
@@ -275,9 +282,9 @@ float sqrtf(float x);
 // float rintf(float x);
 // long double rintl(long double x);
 
-// double round(double x);
-// float roundf(float x);
-// long double roundl(long double x);
+double round(double x);
+float roundf(float x);
+long double roundl(long double x);
 
 // lont int lround(double x);
 // lont int lroundf(float x);
@@ -287,9 +294,9 @@ float sqrtf(float x);
 // long long int llroundf(float x);
 // long long int llroundl(long double x);
 
-// double trunc(double x);
-// float truncf(float x);
-// long double truncl(long double x);
+double trunc(double x);
+float truncf(float x);
+long double truncl(long double x);
 
 /**************/
 
