@@ -1,7 +1,7 @@
+#include <limits.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <limits.h>
 
 /*
  * TODO move all these sections to seperate files
@@ -140,11 +140,15 @@ float sqrtf(float x) { return (float)sqrt(x); }
 /* NEAREST INTEGER */
 double ceil(double x) { return (double)((long long int)x) + !__signbit(x); }
 float ceilf(float x) { return (float)((long long int)x) + !__signbitf(x); }
-long double ceill(long double x) { return (long double)((long long int)x) + !__signbitl(x); }
+long double ceill(long double x) {
+  return (long double)((long long int)x) + !__signbitl(x);
+}
 
 double floor(double x) { return (double)((long long int)x + __signbit(x)); }
 float floorf(float x) { return (float)((long long int)x) + __signbitf(x); }
-long double floorl(long double x) { return (long double)((long long int)x) + __signbitl(x); }
+long double floorl(long double x) {
+  return (long double)((long long int)x) + __signbitl(x);
+}
 
 // TODO make round() branchless (something with signbit internals and xor
 // prolly)
@@ -161,9 +165,7 @@ double fmod(double x, double y) {
   return x - (int)(x / y) * y; // TODO make this NaN and inf proof
 }
 
-double remainder(double x, double y) {
-  return x - round(x / y) * y; // TODO same as fmod
-}
+double remainder(double x, double y) { return x - round(x / y) * y; }
 
 // note that the standardese specifying modulo whatever for
 // quo is just saying that integer overflows are ok here

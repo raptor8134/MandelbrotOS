@@ -57,7 +57,7 @@
 #define FP_FAST_FMAF
 #define FP_FAST_FMAL
 #endif
-#define FP_ILOGB0 INT_MIN 
+#define FP_ILOGB0 INT_MIN
 #define FP_ILOGBNAN INT_MIN
 #define MATH_ERRNO 1
 #define MATH_ERREXCEPT 2
@@ -67,7 +67,7 @@
 
 /* CLASSIFICATION MACROS */
 //#define fpclassify(x) __fpclassify(x) // this function will (maybe) be in
-//math.c
+// math.c
 #define isfinite(x) //
 #define isinf(x) (x == INFINITY || x == -INFINITY)
 #define isnan(x) (x != x) // NaN is the only one not equal to itself
@@ -227,8 +227,8 @@ float logbf(float x);
 
 // The integer version of this is in <stdlib.h>
 #define fabs(x) (x > 0 ? x : -x)
-#define fabsf fabs
-#define fabsl fabs
+#define fabsf(x) fabs(x)
+#define fabsl(x) fabs(x)
 
 double hypot(double x, double y);
 float hypotf(float x, float y);
@@ -300,15 +300,15 @@ long double truncl(long double x);
 /**************/
 
 /* REMAINDER */
-// double fmod(double x, double y);
+double fmod(double x, double y);
 // float fmodf(float x, float y);
 // long double fmodl(long double x, long double y);
 
-// double remainder(double x, double y);
+double remainder(double x, double y);
 // float remainderf(float x, float y);
 // long double remainderl(long double x, long double y);
 
-// double remquo(double x, double y, int *quo);
+double remquo(double x, double y, int *quo);
 // float remquof(float x, float y, int *quo);
 // long double remquol(long double x, long double y, int *quo);
 
