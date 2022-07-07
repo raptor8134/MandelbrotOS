@@ -365,4 +365,11 @@ double fma(double x, double y, double z);
 //#define islessgreater(x,y)
 //#define isunordered(x,y)
 
+/* INTERNALS (DO NOT USE!) (or do use, I don't care)*/
+double __fyl2x(double x, double y); // y * log2(x)
+
+int __signbit(double x);
+int __signbitf(float x);
+int __signbitl(long double x);
+
 #endif
