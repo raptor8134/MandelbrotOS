@@ -4,6 +4,7 @@
 // TODO move to a config.h or makefile or something
 // also note that you should turn this off if your processor does't support
 // the vfmadd213sd instruction
+// might remove since if your processor was made after like 2013 it should support this
 #define SUPPORTS_FMA_ASM
 
 /*
@@ -163,7 +164,7 @@ double tan(double x);
 /**************/
 
 /* EXPONENTIALS */
-// double exp(double x);
+double exp(double x);
 // float expf(float x);
 // long double expl(long double x);
 
@@ -190,16 +191,16 @@ double ldexp(double x, int exp);
 // float ldexpf(float x, int exp);
 // long double ldexpl(long double x, int exp);
 
-// double log(double x);
-// float logf(float x);
+double log(double x);
+float logf(float x);
 // long double logl(long double x);
 
-// double log10(double x);
-// float log10f(float x);
+double log10(double x);
+float log10f(float x);
 // long double log10l(long double x);
 
-// double log1p(double x);
-// float log1pf(float x);
+double log1p(double x);
+float log1pf(float x);
 // long double log1pl(long double x);
 
 double log2(double x);
@@ -209,6 +210,10 @@ float log2f(float x);
 double logb(double x);
 float logbf(float x);
 // long double logbl(long double x);
+
+// double modf(double value, double *iptr);
+// float modff(float value, float *iptr);
+// long double modf(long double value, long double *iptr);
 
 // double scalbn(double x, int n);
 // float scalbnf(float x, int n);
@@ -234,7 +239,7 @@ double hypot(double x, double y);
 float hypotf(float x, float y);
 // long double hypotl(long double x, long double y);
 
-// double pow(double x, double y);
+double pow(double x, double y);
 // float powf(float x, float y);
 // long double powl(long double x, long double y);
 
@@ -363,6 +368,11 @@ double fma(double x, double y, double z);
 //#define islessequal(x,y)
 //#define islessgreater(x,y)
 //#define isunordered(x,y)
+
+/* EXTRAS */ // my own additions to the math library
+long long int factorial(int n);
+
+long double intpow(double x, long int y);
 
 /* INTERNALS (DO NOT USE!) (or do use, I don't care)*/
 double __fyl2x(double x, double y); // y * log2(x)

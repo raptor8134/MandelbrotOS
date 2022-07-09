@@ -12,41 +12,6 @@
  *
  */
 
-/* RANDOM INTERNALS */
-// expose fyl2x asm instruction
-inline double __fyl2x(double x, double y) {
-  double retval;
-  asm("fyl2x" : "=t"(retval) : "0"(x), "u"(y));
-  return retval;
-}
-
-// signbit internals
-// TODO fix for possible big-endian scenario (<endian.h>?)
-int __signbit(double x) {
-  union {
-    double d;
-    uint8_t i[8];
-  } u;
-  u.d = x;
-  return (u.i[7] & 0x80) >> 7;
-}
-int __signbitf(float x) {
-  union {
-    float d;
-    uint8_t i[4];
-  } u;
-  u.d = x;
-  return (u.i[3] & 0x80) >> 7;
-}
-int __signbitl(long double x) {
-  union {
-    long double d;
-    uint8_t i[10];
-  } u;
-  u.d = x;
-  return (u.i[9] & 0x80) >> 7;
-}
-
 /* INVERSE TRIG */
 
 /* TRIG */
@@ -79,6 +44,38 @@ tan(double x) { // using fsincos since its faster than sequential fsin and fcos
 /* HYPERBOLIC TRIG */
 
 /* EXPONENTIALS */
+// TODO make this faster
+// havent benchmarked but ik that its slow
+double exp(double x) {
+  if (x < 0) { return 1/exp(-x); }
+  double retval = 0;
+
+double hypot(double x, double y) { return sqrt(x * x + y * y); }
+float hypotf(float x, float y) { return (float)sqrt(x * x + y * y); }
+
+double pow(double x, double y) {
+  
+}
+
+double sqrt(double x) {
+  double retval;
+  asm("sqrtsd %0, %1" : "=x"(retval) : "x"(x));
+  return retval;
+}
+float sqrtf(float x) { return (float)sqrt(x); }
+
+/* ERROR AND GAMMA */
+
+/* NEAREST INTEGER */
+double ceil(double x) { return (double)((long long int)x) + !__signbit(x); }
+
+  long int center = (long int)round(x);
+  long double cval = intpow(M_E, center);
+  for (int n=31; n>=0; n--) {
+    retval += cval/factorial(n) * intpow(x-center, n);
+  }
+  return retval;
+}
 
 /* LOGARITHMS */
 int ilogb(double x) {
@@ -94,7 +91,7 @@ int ilogb(double x) {
   }
   return retval;
 }
-int ilogbf(float x) { return ilogb((double)x); }
+int ilogbf(float x) { return ilogbf(x); }
 
 // TODO actually make this optimal and not a disgusting mess that
 // probably doesn't work
@@ -109,6 +106,25 @@ double ldexp(double x, int exp) {
     return x / (1LL << (-exp));
   }
 }
+
+// For these log functions, we use the instruction fyl2x, which does
+// the operation y * log_2(x), which we can make into any logarithm by
+// the identity log_b(x) = log_2(x)/log_2(b) = 1/log_2(b) * log_2(x)
+// Defining y / 1/log_2(b) as a constant speeds up the operation a lot
+double log(double x) {
+  // log property magic, 1/log_2(e) = log_e(2)
+  return __fyl2x(x, M_LOG2E);
+}
+float logf(float x) { return (float)__fyl2x((double)x, M_LOG2E); }
+
+double log10(double x) {
+  // more log property magic, 1/log_2(10) = ln(2)/ln(10)
+  return __fyl2x(x, M_LN2/M_LN10);
+}
+float log10f(float x) { return (float)__fyl2x((double)x, M_LN2/M_LN10); }
+
+double log1p(double x) { return __fyl2x(x + 1.0, M_LOG2E); }
+float log1pf(float x) { return (float)__fyl2x((double)x + 1.0, M_LOG2E); }
 
 double log2(double x) { return __fyl2x(x, 1.0); }
 float log2f(float x) { return (float)__fyl2x((double)x, 1.0); }
@@ -127,6 +143,8 @@ float logbf(float x) { return log2f(fabsf(x)); }
 
 double hypot(double x, double y) { return sqrt(x * x + y * y); }
 float hypotf(float x, float y) { return (float)sqrt(x * x + y * y); }
+
+double pow(double x, double y) { return exp(y * log(x)); }
 
 double sqrt(double x) {
   double retval;
@@ -204,3 +222,62 @@ inline double fma(double x, double y, double z) {
 }
 
 /* COMPARISON */
+
+/* EXTRAS */
+// factorial and intpow are basically internals for exp, but
+// they might be useful to someone else
+long long int factorial(int n) {
+  int retval;
+  if (n == 0 || n == 1) { retval = 1; }
+  else {
+    for (retval=n; n>0; n--) {
+      retval *= n;
+    }
+  }
+  return retval;
+}
+
+long double intpow(double x, long int y) {
+  long double retval = 1.0l;
+  for (int i=0; i<y; i++) {
+    retval *= x;
+  }
+  return retval;
+}
+
+/* INTERNALS */
+// expose fyl2x asm instruction
+// could be useful to you if you have to do a log in an arbitrary base
+// TODO make a function for log in an arbitrary base
+inline double __fyl2x(double x, double y) {
+  double retval;
+  asm("fyl2x" : "=t"(retval) : "0"(x), "u"(y));
+  return retval;
+}
+
+// signbit internals
+// TODO fix for possible big-endian scenario (<endian.h>?)
+int __signbit(double x) {
+  union {
+    double d;
+    uint8_t i[8];
+  } u;
+  u.d = x;
+  return (u.i[7] & 0x80) >> 7;
+}
+int __signbitf(float x) {
+  union {
+    float d;
+    uint8_t i[4];
+  } u;
+  u.d = x;
+  return (u.i[3] & 0x80) >> 7;
+}
+int __signbitl(long double x) {
+  union {
+    long double d;
+    uint8_t i[10];
+  } u;
+  u.d = x;
+  return (u.i[9] & 0x80) >> 7;
+}

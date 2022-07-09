@@ -1,40 +1,6 @@
-#include <fcntl.h>
+#include "screen.h"
 #include <math.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <sys/ioctl.h>
-#include <sys/mandelbrot.h>
-#include <sys/mman.h>
-#include <unistd.h>
-
-// lots of framebuffer stuff, maybe move to another file/library
-typedef struct fb {
-  uint32_t *buf;
-  uint16_t width;
-  uint16_t height;
-  uint16_t bpp;
-  int fd;
-} fb_t;
-
-fb_t fb_open(char *path) {
-  fb_t ret;
-  ret.fd = open(path, O_RDWR);
-  ret.width = ioctl(ret.fd, IOCTL_FBDEV_GET_WIDTH, 0);
-  ret.height = ioctl(ret.fd, IOCTL_FBDEV_GET_HEIGHT, 0);
-  ret.bpp = ioctl(ret.fd, IOCTL_FBDEV_GET_BPP, 0);
-  ret.buf = (uint32_t *)mmap(NULL, ret.width * ret.height * (ret.bpp / 8),
-                             PROT_READ | PROT_WRITE, MAP_PRIVATE, ret.fd, 0);
-  return ret;
-}
-
-void fb_close(fb_t screen) { close(screen.fd); }
-
-void color_screen(fb_t fb, uint32_t color) {
-  int maxaddr = fb.width * fb.height;
-  for (int i = 0; i < maxaddr; i++) {
-    fb.buf[i] = color;
-  }
-}
 
 void draw_axes(fb_t fb, uint32_t color, int x, int y) {
   for (int i = 0; i < fb.width; i++) {
@@ -50,7 +16,7 @@ void graph_function(fb_t fb, double (*function)(int), uint32_t color,
                     int origin_x, int origin_y) {
   int maxaddr = fb.width * fb.height;
   long int y; // must be long to prevent overflow converting from double
-  int p;
+  int p, cache;
   double f;
   for (int x = 0; x < fb.width; x++) {
     f = (*function)(x - origin_x);
@@ -58,6 +24,8 @@ void graph_function(fb_t fb, double (*function)(int), uint32_t color,
     p = fb.width * (fb.height - y) + x;
     if (0 <= p && p < maxaddr && y < fb.height && !isnan(f)) {
       fb.buf[p] = color;
+      cache = y;
+      cache++;
     }
   }
 }
@@ -69,6 +37,7 @@ double my_polynomial(int x) {
   return ((x - 300) * (x - 100) * (x + 200)) / 100000;
 }
 double my_circle(int x) { return sqrt(200 * 200 - x * x); }
+double my_exp(int x) { return 10*exp((double)x/100); }
 
 void main() {
   fb_t screen = fb_open("/dev/fb0");
@@ -82,6 +51,7 @@ void main() {
   graph_function(screen, &my_log2, 0x00FF00, x, y);
   graph_function(screen, &my_polynomial, 0x0000FF, x, y);
   graph_function(screen, &my_circle, 0x999999, x, y);
+  graph_function(screen, &my_exp, 0xFF00FF, x, y);
 
   fb_close(screen);
 }
