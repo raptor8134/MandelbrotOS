@@ -44,39 +44,21 @@ tan(double x) { // using fsincos since its faster than sequential fsin and fcos
 /* HYPERBOLIC TRIG */
 
 /* EXPONENTIALS */
-// TODO make this faster
-// havent benchmarked but ik that its slow
 double exp(double x) {
   if (x < 0) { return 1/exp(-x); }
-  double retval = 0;
-
-double hypot(double x, double y) { return sqrt(x * x + y * y); }
-float hypotf(float x, float y) { return (float)sqrt(x * x + y * y); }
-
-double pow(double x, double y) {
-  
-}
-
-double sqrt(double x) {
-  double retval;
-  asm("sqrtsd %0, %1" : "=x"(retval) : "x"(x));
-  return retval;
-}
-float sqrtf(float x) { return (float)sqrt(x); }
-
-/* ERROR AND GAMMA */
-
-/* NEAREST INTEGER */
-double ceil(double x) { return (double)((long long int)x) + !__signbit(x); }
-
+  double a = 0;
+  // Taylor series
   long int center = (long int)round(x);
   long double cval = intpow(M_E, center);
   for (int n=31; n>=0; n--) {
-    retval += cval/factorial(n) * intpow(x-center, n);
+    a += cval/factorial(n) * intpow(x-center, n);
   }
-  return retval;
+  // Newton's method
+  for (int i=0; i<20; i++) {
+    a = a * (1 + x - log(a));
+  }
+  return a;
 }
-
 /* LOGARITHMS */
 int ilogb(double x) {
   int retval;
@@ -112,10 +94,14 @@ double ldexp(double x, int exp) {
 // the identity log_b(x) = log_2(x)/log_2(b) = 1/log_2(b) * log_2(x)
 // Defining y / 1/log_2(b) as a constant speeds up the operation a lot
 double log(double x) {
-  // log property magic, 1/log_2(e) = log_e(2)
-  return __fyl2x(x, M_LOG2E);
+  // https://cs.stackexchange.com/questions/91185/compute-ex-given-starting-approximation
+  int m = 16;
+  double s = x * (1<<m);
+  return M_PI/(2*agm(1, 4/s)) - m*M_LN2;
 }
-float logf(float x) { return (float)__fyl2x((double)x, M_LOG2E); }
+float logf(float x) {
+  return x;
+}
 
 double log10(double x) {
   // more log property magic, 1/log_2(10) = ln(2)/ln(10)
@@ -170,9 +156,11 @@ long double floorl(long double x) {
 
 // TODO make round() branchless (something with signbit internals and xor
 // prolly)
-double round(double x) { return floor(x + 0.5 * (x > 0 ? 1 : -1)); }
-float roundf(float x) { return floorf(x + 0.5 * (x > 0 ? 1 : -1)); }
-long double roundl(long double x) { return floorl(x + 0.5 * (x > 0 ? 1 : -1)); }
+double round(double x) { return (long long int)(x + 0.5 * (x > 0 ? 1 : -1)); }
+float roundf(float x) { return (long long int)floorf(x + 0.5 * (x > 0 ? 1 : -1)); }
+long double roundl(long double x) { 
+  return (long long int)floorl(x + 0.5 * (x > 0 ? 1 : -1));
+}
 
 double trunc(double x) { return (double)((long long int)x); }
 float truncf(float x) { return (float)((long long int)x); }
@@ -227,10 +215,9 @@ inline double fma(double x, double y, double z) {
 // factorial and intpow are basically internals for exp, but
 // they might be useful to someone else
 long long int factorial(int n) {
-  int retval;
-  if (n == 0 || n == 1) { retval = 1; }
-  else {
-    for (retval=n; n>0; n--) {
+  int retval = 1;
+  if (n > 1) {
+    for (; n>0; n--) {
       retval *= n;
     }
   }
@@ -238,11 +225,23 @@ long long int factorial(int n) {
 }
 
 long double intpow(double x, long int y) {
+  if (y < 0) { return intpow(x, -y); }
   long double retval = 1.0l;
   for (int i=0; i<y; i++) {
     retval *= x;
   }
   return retval;
+}
+
+// arithmetic-geometric mean, for natural log function
+double agm(double x, double y) { 
+    double a[2] = {x, 0}, g[2] = {y, 0};
+    for (int i=0; i<10; i++) {
+        a[1] = (a[0] + g[0])/2;
+        g[1] = sqrt(a[0] * g[0]);
+        a[0] = a[1]; g[0] = g[1];
+    }
+    return a[0];
 }
 
 /* INTERNALS */

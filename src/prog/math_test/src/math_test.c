@@ -1,6 +1,7 @@
 #include "screen.h"
 #include <math.h>
 #include <stdint.h>
+#include <stdio.h>
 
 void draw_axes(fb_t fb, uint32_t color, int x, int y) {
   for (int i = 0; i < fb.width; i++) {
@@ -37,7 +38,7 @@ double my_polynomial(int x) {
   return ((x - 300) * (x - 100) * (x + 200)) / 100000;
 }
 double my_circle(int x) { return sqrt(200 * 200 - x * x); }
-double my_exp(int x) { return 10*exp((double)x/100); }
+double my_exp(int x) { return 10*exp(((double)x)/100); }
 
 void main() {
   fb_t screen = fb_open("/dev/fb0");
