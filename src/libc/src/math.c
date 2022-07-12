@@ -60,6 +60,20 @@ double exp(double x) {
   }
   return a;
 }
+
+// this one just uses a close to the origin Taylor series + Newton's,
+// since its intended purpose is for small values of x
+double expm1(double x) {
+  double a = 0; 
+  for (int n=1; n<5; n++) {
+    a += intpow(x,n) / factorial(n);
+  }
+  for (int i=0; i<10; i++) {
+    a = a * (1 + x - log(a));
+  }
+  return a;
+}
+
 /* LOGARITHMS */
 int ilogb(double x) {
   int retval;
