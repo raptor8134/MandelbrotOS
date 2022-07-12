@@ -44,6 +44,7 @@ tan(double x) { // using fsincos since its faster than sequential fsin and fcos
 /* HYPERBOLIC TRIG */
 
 /* EXPONENTIALS */
+// TODO comment this more, the math is really cool
 double exp(double x) {
   if (x < 0) { return 1/exp(-x); }
   double a = 0;
@@ -89,12 +90,8 @@ double ldexp(double x, int exp) {
   }
 }
 
-// For these log functions, we use the instruction fyl2x, which does
-// the operation y * log_2(x), which we can make into any logarithm by
-// the identity log_b(x) = log_2(x)/log_2(b) = 1/log_2(b) * log_2(x)
-// Defining y / 1/log_2(b) as a constant speeds up the operation a lot
+// https://cs.stackexchange.com/questions/91185/compute-ex-given-starting-approximation
 double log(double x) {
-  // https://cs.stackexchange.com/questions/91185/compute-ex-given-starting-approximation
   int m = 16;
   double s = x * (1<<m);
   return M_PI/(2*agm(1, 4/s)) - m*M_LN2;
@@ -132,10 +129,16 @@ float hypotf(float x, float y) { return (float)sqrt(x * x + y * y); }
 
 double pow(double x, double y) { return exp(y * log(x)); }
 
+// https://math.stackexchange.com/questions/296102/fastest-square-root-algorithm
+// https://en.wikipedia.org/wiki/Methods_of_computing_square_roots
+// TODO figure out the optimal number of iterations for Newton's method 
+// for any given argument
 double sqrt(double x) {
-  double retval;
-  asm("sqrtsd %0, %1" : "=x"(retval) : "x"(x));
-  return retval;
+  double a = 10 - 190/(x+20);
+  for (int i=0; i<30; i++) {
+    a = a - (a*a - x)/(2*a);
+  }
+  return a;
 }
 float sqrtf(float x) { return (float)sqrt(x); }
 
@@ -247,7 +250,6 @@ double agm(double x, double y) {
 /* INTERNALS */
 // expose fyl2x asm instruction
 // could be useful to you if you have to do a log in an arbitrary base
-// TODO make a function for log in an arbitrary base
 inline double __fyl2x(double x, double y) {
   double retval;
   asm("fyl2x" : "=t"(retval) : "0"(x), "u"(y));
