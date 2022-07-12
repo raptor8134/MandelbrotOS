@@ -148,6 +148,7 @@ double pow(double x, double y) { return exp(y * log(x)); }
 // TODO figure out the optimal number of iterations for Newton's method 
 // for any given argument
 double sqrt(double x) {
+  if (x < 0) { return NAN;}
   double a = 10 - 190/(x+20);
   for (int i=0; i<30; i++) {
     a = a - (a*a - x)/(2*a);
