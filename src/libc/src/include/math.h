@@ -172,7 +172,7 @@ double exp(double x);
 // float exp2f(float x);
 // long double exp2l(long double x);
 
-// double expm1(double x);
+double expm1(double x);
 // float expm1f(float x);
 // long double expm1l(long double x);
 

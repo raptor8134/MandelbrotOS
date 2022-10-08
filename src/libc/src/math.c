@@ -42,6 +42,19 @@ tan(double x) { // using fsincos since its faster than sequential fsin and fcos
 /* HYPERBOLIC INVERSE TRIG */
 
 /* HYPERBOLIC TRIG */
+double cosh(double x) {
+  return (exp(x) + exp(-x))/2;
+}
+
+double sinh(double x) {
+  return (exp(x) - exp(-x))/2;
+}
+
+double tanh(double x) {
+  double e1 = exp(x);
+  double e2 = 1/e1;
+  return (e1 + e2)/(e1 - e2);
+}
 
 /* EXPONENTIALS */
 // TODO comment this more, the math is really cool
@@ -96,7 +109,11 @@ double ldexp(double x, int exp) {
   if (x == 0 || abs(x) == INFINITY || exp == 0 || isnan(x)) {
     return x;
   } else if (abs(exp) >= (int)sizeof(long long int)) {
-    return x > 0 ? HUGE_VAL : -HUGE_VAL;
+    double expval = 1.0;
+    for (int i=0; i<exp; i++) {
+      expval *= 2;
+    }
+    return x * expval;
   } else if (x > 0) {
     return x * (1LL << exp);
   } else {
@@ -146,7 +163,7 @@ double pow(double x, double y) { return exp(y * log(x)); }
 // https://math.stackexchange.com/questions/296102/fastest-square-root-algorithm
 // https://en.wikipedia.org/wiki/Methods_of_computing_square_roots
 // TODO figure out the optimal number of iterations for Newton's method 
-// for any given argument
+// for any given argument, since this tends to break for ridiculously large numbers
 double sqrt(double x) {
   if (x < 0) { return NAN;}
   double a = 10 - 190/(x+20);
@@ -155,6 +172,7 @@ double sqrt(double x) {
   }
   return a;
 }
+// TODO change this
 float sqrtf(float x) { return (float)sqrt(x); }
 
 /* ERROR AND GAMMA */
@@ -266,9 +284,20 @@ double agm(double x, double y) {
 // expose fyl2x asm instruction
 // could be useful to you if you have to do a log in an arbitrary base
 inline double __fyl2x(double x, double y) {
+  /*
   double retval;
   asm("fyl2x" : "=t"(retval) : "0"(x), "u"(y));
   return retval;
+  */
+  return y * log(x) / M_LN2;
+}
+
+// https://en.wikipedia.org/wiki/Binary_logarithm#Iterative_approximation
+double new_log2(double x) {
+  for (int i=0; i<10; i++) {
+    break;
+  }
+  return x;
 }
 
 // signbit internals

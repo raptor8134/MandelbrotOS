@@ -113,7 +113,7 @@ void k_thread() {
    * "/dev/tty0", 0); */
 
   char *args[] = {"PATH=/prog", NULL};
-  sched_run_program("/prog/shell", NULL, args, "/dev/tty0", "/dev/tty0",
+  sched_run_program("/prog/math_test", NULL, args, "/dev/tty0", "/dev/tty0",
                     "/dev/tty0", 0);
 
   while (1) {

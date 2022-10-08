@@ -22,7 +22,8 @@
 /** Basic Shell Program in C.
  *  The program behaves like a simplified version of the Bourne Shell.
  */
-int main(int argc, char *argv[]) {
+//int main(int argc, char *argv[]) {
+void main(int argc, char *argv[]) {
   (void)argc;
   // const int argsLength = (MAX_ARGS * MAX_ARGS_LEN) + 1; // +1: Terminating
   // Character.
@@ -153,5 +154,5 @@ int main(int argc, char *argv[]) {
     }
     free(cmds);
   }
-  return 0;
+  //return 0;
 }
